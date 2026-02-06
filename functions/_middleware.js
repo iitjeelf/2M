@@ -1,89 +1,113 @@
-// Global lock state (in-memory, resets on redeploy but works)
-let IS_LOCKED = false;
-
+// middleware.js - KV Storage Version
 export async function onRequest(context) {
-  const { request, next } = context;
+  const { request, next, env } = context;
   const url = new URL(request.url);
+  const hostname = url.hostname;
   
-  // ===== ADMIN CONTROL =====
+  // KV namespace - bound in Cloudflare Dashboard
+  const KV = env.CLASS_STATES;
+  
+  // === ADMIN CONTROL ===
   if (url.pathname === "/admin-control") {
     const action = url.searchParams.get("do");
     
+    // LOCK
     if (action === "lock") {
-      IS_LOCKED = true;
-      return new Response("LOCKED - All users blocked", {
-        headers: { "Content-Type": "text/plain" }
-      });
+      try {
+        await KV.put(hostname, "LOCKED");
+        return new Response("LOCKED", {
+          headers: { 
+            "Content-Type": "text/plain",
+            "Access-Control-Allow-Origin": "*"
+          }
+        });
+      } catch (error) {
+        return new Response("ERROR", { status: 500 });
+      }
     }
     
+    // UNLOCK
     if (action === "unlock") {
-      IS_LOCKED = false;
-      return new Response("UNLOCKED - All users allowed", {
-        headers: { "Content-Type": "text/plain" }
-      });
+      try {
+        await KV.put(hostname, "UNLOCKED");
+        return new Response("UNLOCKED", {
+          headers: { 
+            "Content-Type": "text/plain",
+            "Access-Control-Allow-Origin": "*"
+          }
+        });
+      } catch (error) {
+        return new Response("ERROR", { status: 500 });
+      }
     }
     
+    // STATUS
     if (action === "status") {
-      return new Response(IS_LOCKED ? "LOCKED" : "UNLOCKED", {
-        headers: { "Content-Type": "text/plain" }
-      });
+      try {
+        const state = await KV.get(hostname);
+        return new Response(state === "LOCKED" ? "LOCKED" : "UNLOCKED", {
+          headers: { 
+            "Content-Type": "text/plain",
+            "Access-Control-Allow-Origin": "*"
+          }
+        });
+      } catch (error) {
+        return new Response("ERROR", { status: 500 });
+      }
     }
     
     return new Response("Use ?do=lock, unlock, or status");
   }
   
-  // ===== CHECK LOCK STATE =====
-  if (IS_LOCKED) {
-    // Simple lock page
-    return new Response(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Classroom Locked</title>
-        <style>
-          body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 100px 20px;
-            background: #f0f0f0;
-          }
-          .box {
-            background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            max-width: 500px;
-            margin: 0 auto;
-          }
-          h1 {
-            color: red;
-            margin-bottom: 20px;
-          }
-          p {
-            color: #333;
-            font-size: 18px;
-            margin-bottom: 10px;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="box">
-          <h1> EXAM LOCKED</h1>
-          <p>This exam is temporarily locked by the teacher.</strong></p>
-                    <p style="color: #666; margin-top: 30px;"></p>
-        </div>
-        <script>
-          // Auto-refresh
-          setTimeout(() => location.reload(), 10000);
-        </script>
-      </body>
-      </html>
-    `, {
-      status: 403,
-      headers: { "Content-Type": "text/html" }
-    });
+  // === CHECK IF LOCKED ===
+  try {
+    const state = await KV.get(hostname);
+    if (state === "LOCKED") {
+      return new Response(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Class Locked</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              text-align: center;
+              padding: 50px;
+              background: linear-gradient(135deg, #ff6b6b 0%, #c62828 100%);
+              height: 100vh;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              margin: 0;
+            }
+            .lock-box {
+              background: white;
+              padding: 40px;
+              border-radius: 15px;
+              box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+              border: 4px solid red;
+              max-width: 500px;
+            }
+            h1 { color: red; }
+          </style>
+        </head>
+        <body>
+          <div class="lock-box">
+            <h1>🔒 EXAM LOCKED </h1>
+            <p><strong>This EXAM is locked by the teacher.</strong></p>
+                     </div>
+        </body>
+        </html>
+      `, { 
+        status: 403,
+        headers: { "Content-Type": "text/html" }
+      });
+    }
+  } catch (error) {
+    // If KV fails, allow access
+    console.error("KV error:", error);
   }
   
-  // ===== NORMAL ACCESS =====
+  // === NORMAL ACCESS ===
   return next();
 }
