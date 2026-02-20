@@ -1463,14 +1463,10 @@ body.anti-sleep-active {
 <!-- Access Denied Screen - ALWAYS SHOWS FIRST -->
 <div id="accessDenied" class="access-denied">
     <h1>LFJC ONLINE EXAMINATION</h1>
-    <p style="font-size: 1.2em; margin: 10px 0;">TOTAL 75 QUESTIONS</p>
-    <p style="margin: 5px 0;">• Maths: 20 (MCQ), 5 (Numerical Input)</p>
-    <p style="margin: 5px 0;">• Physics: 20 (MCQ), 5(Numerical Input)</p>
-    <p style="margin: 5px 0;">• Chemistry: 20 (MCQ), 5 (Numerical Input)</p>
+    <p style="font-size: 1.2em; margin: 10px 0;" id="totalQuestionsDisplay">TOTAL QUESTIONS</p>
+    <div id="subjectBreakdownDisplay"></div>
     <p style="margin: 10px 0; font-weight: bold;">CORRECT ANSWER + 4 MARKS</p>
     <p style="margin: 5px 0; font-weight: bold;">WRONG ANSWER -1 MARK</p>
-    <p style="margin: 15px 0; max-width: 600px; line-height: 1.5;">
-       
     <input type="password" id="accessCode" class="access-code-input" placeholder="Enter Access Code">
     <button id="verifyAccess" class="verify-btn">VERIFY ACCESS</button>
     <div id="accessError" class="access-error">❌ Invalid access code. Please try again.</div>
@@ -1555,7 +1551,6 @@ body.anti-sleep-active {
       <b>Section:</b> <span id="summarySection"></span> | 
       <b>Roll:</b> <span id="summaryRoll"></span> | 
       <b>Admission No:</b> <span id="summaryAdm"></span>
-      <!-- REMOVED: | <b>Form:</b> <span id="summaryForm"></span> -->
     </div>
   </div>
   
@@ -1585,7 +1580,6 @@ body.anti-sleep-active {
       <b>Section:</b> <span id="reviewSection"></span> | 
       <b>Roll:</b> <span id="reviewRoll"></span> | 
       <b>Admission No:</b> <span id="reviewAdm"></span>
-      <!-- REMOVED: | <b>Form:</b> <span id="reviewForm"></span> -->
     </div>
   </div>
   
@@ -1611,7 +1605,7 @@ body.anti-sleep-active {
   </div>
 </div>
 
-<footer>© LFJC 2025 All Rights Reserved</footer>
+<footer>© LFJC 2026 All Rights Reserved</footer>
 
 <!-- Security Overlays -->
 <div id="fullRedOverlay"></div>
@@ -1645,25 +1639,91 @@ body.anti-sleep-active {
 <div id="autoSaveIndicator">Auto-saved ✓</div>
 
 <script>
-// ===== CONFIGURATION =====
+// ===== 🔥 ULTRA-SIMPLE CONFIGURATION - CHANGE ONLY THIS BLOCK =====
+const EXAM_SETUP = {
+    // List your subjects: name, total questions, how many are numerical
+    subjects: [
+        { name: "Maths", questions: 15, numerical: 0 },      // 15 MCQ, 0 Numerical
+        { name: "Physics", questions: 20, numerical: 5 },    // 15 MCQ, 5 Numerical
+        { name: "Chemistry", questions: 20, numerical: 0 }   // 20 MCQ, 0 Numerical
+    ],
+    
+    // Total time in minutes
+    duration: 180,
+    
+    // Which subjects to send to Google Forms (use exact names from above)
+    activeForForms: ["MATHS", "PHYSICS", "CHEMISTRY"]
+};
+
+// ===== AUTO-CALCULATE EVERYTHING FROM YOUR CONFIG =====
+let currentStart = 1;
+EXAM_SETUP.subjects.forEach(subject => {
+    subject.start = currentStart;
+    subject.end = currentStart + subject.questions - 1;
+    subject.mcq = subject.questions - subject.numerical;
+    subject.numericalStart = subject.end - subject.numerical + 1;
+    currentStart = subject.end + 1;
+});
+
+const TOTAL_QUESTIONS = currentStart - 1;
+const EXAM_DURATION_MINUTES = EXAM_SETUP.duration;
+const ACTIVE_EXAM_SUBJECTS = EXAM_SETUP.activeForForms;
+
+// Build subject ranges for exam
+const SUBJECTS = EXAM_SETUP.subjects.map(s => ({
+    name: s.name,
+    start: s.start,
+    end: s.end
+}));
+
+// Build question types lookup
+const QUESTION_TYPES = {};
+EXAM_SETUP.subjects.forEach(subject => {
+    const numericalRanges = [];
+    if (subject.numerical > 0) {
+        numericalRanges.push([subject.numericalStart, subject.end]);
+    }
+    QUESTION_TYPES[subject.name] = { numericalRanges };
+});
+
+console.log("✅ Exam auto-configured!");
+console.log(`Total Questions: ${TOTAL_QUESTIONS}`);
+EXAM_SETUP.subjects.forEach(s => {
+    console.log(`${s.name}: Q${s.start}-${s.end} (${s.mcq} MCQ`, 
+                s.numerical > 0 ? `, Q${s.numericalStart}-${s.end} Numerical)` : "All MCQ)");
+});
+
+// Update the access denied screen
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('totalQuestionsDisplay').textContent = `TOTAL ${TOTAL_QUESTIONS} QUESTIONS`;
+    
+    let breakdownHTML = '';
+    EXAM_SETUP.subjects.forEach(s => {
+        if (s.numerical > 0) {
+            breakdownHTML += `<p style="margin: 5px 0;">• ${s.name}: ${s.mcq} (MCQ), ${s.numerical} (Numerical Input)</p>`;
+        } else {
+            breakdownHTML += `<p style="margin: 5px 0;">• ${s.name}: ${s.questions} (MCQ)</p>`;
+        }
+    });
+    document.getElementById('subjectBreakdownDisplay').innerHTML = breakdownHTML;
+});
+
+// ===== CONFIGURATION CONSTANTS (Auto-set from above) =====
 const MARK_PER_CORRECT = 4, MARK_PER_WRONG = -1;
-const EXAM_DURATION_MINUTES = 180; // 3 hours for 75 questions
-const EXAM_DURATION_MS = EXAM_DURATION_MINUTES * 60 * 1000;
 const STORAGE_KEY_PREFIX = "lfjc_exam_";
-const MAX_QUESTIONS = 75;
 const ACCESS_CODE = "lfjc2025";
 const ADMIN_PASSWORD = "admin2025";
 const RESUBMISSION_PASSWORD = "resubmit2025";
 const RESUBMISSION_WINDOW_HOURS = 24;
 
 // EXTERNAL ANSWER KEY CONFIGURATION
-const ANSWER_KEY_URL = 'answer-key.txt'; // External file containing the key
-let answerKey = []; // Will be loaded from external file
+const ANSWER_KEY_URL = 'answer-key.txt';
+let answerKey = [];
 let keyLoaded = false;
 
 // POWER LOSS PROTECTION CONFIG
-const AUTO_SAVE_INTERVAL = 15; // seconds
-const RECOVERY_WINDOW_HOURS = 4; // Allow recovery within 4 hours
+const AUTO_SAVE_INTERVAL = 15;
+const RECOVERY_WINDOW_HOURS = 4;
 const STORAGE_KEYS = {
     EXAM_PROGRESS: 'lfjc_exam_progress_v2',
     EXAM_METADATA: 'lfjc_exam_metadata',
@@ -1673,71 +1733,65 @@ const STORAGE_KEYS = {
     PENDING_SUBMISSIONS: 'lfjc_pending_submissions'
 };
 
-// QUESTION STRUCTURE CONFIGURATION
-const QUESTION_STRUCTURE = {
-  total: 75,
-  subjects: [
-    { 
-      name: "Physics", 
-      start: 1, 
-      end: 25, 
-      mcqRange: [1, 20], 
-      fillBlanksRange: [21, 25]
-    },
-    { 
-      name: "Chemistry", 
-      start: 26, 
-      end: 50, 
-      mcqRange: [26, 45], 
-      fillBlanksRange: [46, 50]
-    },
-    { 
-      name: "Maths", 
-      start: 51, 
-      end: 75, 
-      mcqRange: [51, 70], 
-      fillBlanksRange: [71, 75]
-    }
-  ]
+// ===== QUESTION STRUCTURE (Auto-built) =====
+const QUESTION_STRUCTURE = {};
+EXAM_SETUP.subjects.forEach(subject => {
+    const subjectKey = subject.name.toLowerCase();
+    QUESTION_STRUCTURE[subjectKey] = {
+        mcq: [subject.start, subject.start + subject.mcq - 1],
+        numerical: subject.numerical > 0 ? [subject.numericalStart, subject.end] : null
+    };
+});
+
+// ===== EXAM CONFIGURATION =====
+const EXAM_CONFIG = {
+    paperSubjects: EXAM_SETUP.subjects.map(s => s.name.substring(0,1)),
+    paperCode: EXAM_SETUP.subjects.map(s => s.name.substring(0,1)).join(''),
+    totalQuestions: TOTAL_QUESTIONS,
+    subjects: SUBJECTS,
+    durationMinutes: EXAM_DURATION_MINUTES
+};
+
+// ===== 🎯 COMPLETE FIELD MAPPING FROM YOUR FORM =====
+const FORM_FIELDS = {
+    // Student Information
+    STUDENT_NAME: "entry.217666919",
+    SECTION: "entry.2006392966",
+    ROLL_NUMBER: "entry.547275105",
+    ADMISSION_NUMBER: "entry.1234063852",
+    
+    // Subject Fields (as they appear in your form)
+    MATHS_A: "entry.1989859216",      // Maths-A
+    MATHS_B: "entry.751186481",       // Maths-B
+    MATHS: "entry.1773709116",         // Maths (main)
+    BOTANY: "entry.1228811999",        // Botany
+    ZOOLOGY: "entry.361390291",        // zoology
+    BZ: "entry.1382726950",            // BZ
+    PHYSICS: "entry.1953974928",       // Physics
+    CHEMISTRY: "entry.296331194",      // Chemistry
+    
+    // Marks Fields
+    A_MARKS: "entry.1390068574",       // A Marks
+    B_MARKS: "entry.1587280094",       // B Marks
+    C_MARKS: "entry.1032663012",       // C Marks
+    
+    // Total & Answers
+    TOTAL_MARKS: "entry.1289040887",   // Total marks
+    ALL_ANSWERS: "entry.2135062491"    // All Answers
 };
 
 // ===== MULTI-FORM GOOGLE FORMS INTEGRATION =====
 const GOOGLE_FORMS = {
-    'A': "https://docs.google.com/forms/d/e/1FAIpQLSe4uuphhY4-p5jdTZqxG_ZZUKAhQZF1ytyNizPXb0n3L85JIw/formResponse",
-    'B': "https://docs.google.com/forms/d/e/1FAIpQLSc3JIcnUysvUtH12QWpHG9wAF4vd1NgEYqeyHwNP0UEkPqi5w/formResponse", 
-    'C': "https://docs.google.com/forms/d/e/1FAIpQLScqYdTGoD4l0jJvzYw0tdBNRSMPepnGtOOowOXYwDFov43KHg/formResponse",
-    'D': "https://docs.google.com/forms/d/e/1FAIpQLSfjAyDlY-5BAF5rPvzQS0AeTI6Vs2Rkri0V6_miA0mRivZAEg/formResponse",
-    'E': "https://docs.google.com/forms/d/e/1FAIpQLSfK6Skl6Uxj8VyGnhhqfdPHcJ8mbcgpzIKLpWFElzdeQSKMgA/formResponse",
-    'F': "https://docs.google.com/forms/d/e/1FAIpQLSeP-Gx2XnUg_Q17asOOeYzkoGtLykVIcQ2W006YTqTpE7xY6g/formResponse",
-    'G': "https://docs.google.com/forms/d/e/1FAIpQLSe1vg_I5XR3ljr-UNFi-MXxUgjdTDyrVbHxqi_dkvtmYGUTEA/formResponse",
-    'H': "https://docs.google.com/forms/d/e/1FAIpQLScyv8cps4StN2UXrsXqNdLu5UBR7t0Vwk8WSnynU2tvracs1g/formResponse",
-    'I': "https://docs.google.com/forms/d/e/1FAIpQLSeyen2hSdhRwztpWnH6lyuL91ZROqwDMKIaa4gN_e-Xvyvb_g/formResponse",
-    'J': "https://docs.google.com/forms/d/e/1FAIpQLSelbDi1n1EKWu7G0I92hTML6vWUO2c55p2dqrEOQ7cWflaSNg/formResponse"
-};
-
-const COMMON_FIELDS = {
-    STUDENT_NAME: "entry.217666919",
-    SECTION: "entry.2006392966", 
-    ROLL_NUMBER: "entry.547275105",
-    ADMISSION_NUMBER: "entry.1234063852",
-    MATHS_MARKS: "entry.1989859216",
-    PHYSICS_MARKS: "entry.1953974928", 
-    CHEMISTRY_MARKS: "entry.296331194",
-    TOTAL_MARKS: "entry.1289040887",
-    TIMESTAMP: "entry.2139100252"
-};
-
-const ANSWERS_FIELDS = {
-    'A': "entry.224183536",
-    'B': "entry.2135062491",
-    'C': "entry.66262823",
-    'D': "entry.762314240",
-    'E': "entry.109746612",
-    'F': "entry.813348755",
-    'G': "entry.1184321804",
-    'H': "entry.64526224",
-    'I': "entry.1618336199",
-    'J': "entry.1279707071"
+    '1': "https://docs.google.com/forms/d/e/1FAIpQLSfDqJ96BQj-kHj6RwHW1Vb1jSUQ7x-2lxMbSEAtb1GNVGB6xA/formResponse",
+    '2': "https://docs.google.com/forms/d/e/1FAIpQLSfgUmoGNzqlP4shcdEIGmK6ftCxl-z-7NTQX0t1dJS6HBYNnw/formResponse",
+    '3': "https://docs.google.com/forms/d/e/1FAIpQLSeFGU6ngws5V1Un--VElcO7ivRtXUcOLzdIvEUQNu7RrZvpLw/formResponse",
+    '4': "https://docs.google.com/forms/d/e/1FAIpQLSdwMn5az6oBg6GZknUib_G-qHECxPb7bXg2yoqK_vjxGU4JQg/formResponse",
+    '5': "https://docs.google.com/forms/d/e/1FAIpQLSeuej9VVaxkv5Ail7Pbk5yzS5HuOlen2bVz4L2rsdywWBIvmQ/formResponse",
+    '6': "https://docs.google.com/forms/d/e/1FAIpQLSdV9wo2ANl-BP9HFj0ZvlVYSClJnHj4JEEZpXS6CNx6BIkLYQ/formResponse",
+    '7': "https://docs.google.com/forms/d/e/1FAIpQLSciFvDMM8IKo5K1YgV0DXHXyzZtBNnz8kZB_WybewvN0wQUvA/formResponse",
+    '8': "https://docs.google.com/forms/d/e/1FAIpQLSd9Oj2FaCzpmqQesWmQL-5t1FKfUfzz5AaVTc-Dq-eDujUr3g/formResponse",
+    '9': "https://docs.google.com/forms/d/e/1FAIpQLSdeUH8oatXXsB9NuQpsbRWfnGj0N5Cbh7SVe07tmcUW9WJj8A/formResponse",
+    '10': "https://docs.google.com/forms/d/e/1FAIpQLSf3n6fMXa3mP_ij279XKLELfohGwuMfmWWc9fTfM3VgY2oWLg/formResponse"
 };
 
 // ===== GLOBAL VARIABLES =====
@@ -1750,7 +1804,7 @@ let examInProgress = false;
 let preloadedImages = {};
 let currentSubjData = null;
 let adminOverrideActive = false;
-let assignedForm = 'A';
+let assignedForm = '1';
 let isResubmission = false;
 let submissionInProgress = new Set();
 let googleFormsSubmissionStatus = 'pending';
@@ -1775,7 +1829,7 @@ let lastSystemTrayViolationTime = 0;
 let systemTrayCheckInterval = null;
 let systemTrayDetector = null;
 
-const subjects = ["Physics", "Chemistry", "Maths"];
+const subjects = EXAM_SETUP.subjects.map(s => s.name);
 let examData = {files: [], subjectNames: [], keys: [], originalOrder: [], questionTypes: []};
 let progress = null, timerInterval = null;
 
@@ -1787,12 +1841,10 @@ function startAutoClick() {
     
     console.log('🖱️ Starting auto-click system (every 30 seconds)');
     
-    // Track real clicks to simulate in similar positions
     document.addEventListener('click', function(e) {
         window.lastClickPosition = { x: e.clientX, y: e.clientY };
     });
     
-    // Start with default position (center of screen)
     if (!window.lastClickPosition) {
         window.lastClickPosition = {
             x: window.innerWidth / 2,
@@ -1804,14 +1856,12 @@ function startAutoClick() {
         if (!examInProgress || document.hidden) return;
         
         try {
-            // Generate a real click event
             performAutoClick();
         } catch (error) {
             console.error('Auto-click error:', error);
         }
-    }, 30000); // Every 30 seconds
+    }, 30000);
     
-    // Also do an immediate click
     setTimeout(performAutoClick, 1000);
 }
 
@@ -1820,39 +1870,32 @@ function performAutoClick() {
     
     const currentTime = Date.now();
     
-    // Don't click too frequently (safety check)
     if (window.lastAutoClickTime && currentTime - window.lastAutoClickTime < 1000) {
         return;
     }
     
     window.lastAutoClickTime = currentTime;
     
-    // Generate random position near last click (so it's not always same spot)
     const randomX = window.lastClickPosition.x + (Math.random() * 100 - 50);
     const randomY = window.lastClickPosition.y + (Math.random() * 100 - 50);
     
-    // Ensure position is within viewport
     const safeX = Math.max(10, Math.min(window.innerWidth - 10, randomX));
     const safeY = Math.max(10, Math.min(window.innerHeight - 10, randomY));
     
     console.log(`🖱️ Auto-clicking at position (${Math.round(safeX)}, ${Math.round(safeY)})`);
     
-    // Create and dispatch ALL mouse events to simulate real click
     simulateRealClick(safeX, safeY);
     
-    // Also update stored position
     window.lastClickPosition.x = safeX;
     window.lastClickPosition.y = safeY;
 }
 
 function simulateRealClick(x, y) {
     try {
-        // Get the element at this position
         const element = document.elementFromPoint(x, y) || document.body;
         
         if (!element) return;
         
-        // Create full sequence of mouse events (like real click)
         const events = [
             { type: 'mousemove', clientX: x, clientY: y },
             { type: 'mousedown', clientX: x, clientY: y, button: 0 },
@@ -1874,7 +1917,6 @@ function simulateRealClick(x, y) {
             element.dispatchEvent(event);
         });
         
-        // Also focus the element if it's focusable
         if (element.tabIndex >= 0 || 
             element.tagName === 'INPUT' || 
             element.tagName === 'BUTTON' ||
@@ -1883,7 +1925,6 @@ function simulateRealClick(x, y) {
             element.focus();
         }
         
-        // Visual feedback (optional - for debugging)
         showClickFeedback(x, y);
         
     } catch (error) {
@@ -1892,7 +1933,6 @@ function simulateRealClick(x, y) {
 }
 
 function showClickFeedback(x, y) {
-    // Create a temporary visual indicator
     const feedback = document.createElement('div');
     feedback.style.cssText = `
         position: fixed;
@@ -1937,29 +1977,17 @@ class KeepAwakeSystem {
     start() {
         console.log('🔋 Starting comprehensive keep-awake system');
         
-        // 1. Start auto-click every 30 seconds
         this.startAutoClickSystem();
-        
-        // 2. Add keyboard events (Shift key every 45 seconds)
         this.startKeyboardActivity();
-        
-        // 3. Add visual activity
         this.startVisualActivity();
-        
-        // 4. Use Wake Lock API if available
         this.startWakeLock();
-        
-        // 5. Silent video playback (most effective)
         this.startSilentVideo();
-        
-        // 6. Safe click zones
         this.createSafeClickZones();
         
         console.log('✅ Keep-awake system fully activated');
     }
     
     startAutoClickSystem() {
-        // Click every 30 seconds
         const clickInterval = setInterval(() => {
             if (!examInProgress || document.hidden) return;
             performSmartClick();
@@ -1967,19 +1995,16 @@ class KeepAwakeSystem {
         
         this.intervals.push(clickInterval);
         
-        // Do initial click
         setTimeout(() => {
             if (examInProgress) performSmartClick();
         }, 2000);
     }
     
     startKeyboardActivity() {
-        // Simulate keyboard activity every 45 seconds
         const keyboardInterval = setInterval(() => {
             if (!examInProgress || document.hidden) return;
             
             try {
-                // Simulate Shift key press
                 const keyDown = new KeyboardEvent('keydown', {
                     key: 'Shift',
                     code: 'ShiftLeft',
@@ -2010,7 +2035,6 @@ class KeepAwakeSystem {
     }
     
     startVisualActivity() {
-        // Change document title slightly (some systems monitor this)
         let titleCounter = 0;
         const originalTitle = document.title;
         
@@ -2034,7 +2058,6 @@ class KeepAwakeSystem {
                 this.wakeLock = await navigator.wakeLock.request('screen');
                 console.log('✅ Wake Lock acquired');
                 
-                // Reacquire on visibility change
                 document.addEventListener('visibilitychange', async () => {
                     if (document.visibilityState === 'visible' && examInProgress && this.wakeLock === null) {
                         try {
@@ -2053,7 +2076,6 @@ class KeepAwakeSystem {
     
     startSilentVideo() {
         try {
-            // Create a 1x1 pixel video element
             this.videoElement = document.createElement('video');
             this.videoElement.style.cssText = `
                 position: absolute;
@@ -2064,7 +2086,6 @@ class KeepAwakeSystem {
                 z-index: -9999;
             `;
             
-            // Create canvas stream
             const canvas = document.createElement('canvas');
             canvas.width = 2;
             canvas.height = 2;
@@ -2072,7 +2093,7 @@ class KeepAwakeSystem {
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, 2, 2);
             
-            const stream = canvas.captureStream(1); // 1 FPS
+            const stream = canvas.captureStream(1);
             this.videoElement.srcObject = stream;
             this.videoElement.muted = true;
             this.videoElement.autoplay = true;
@@ -2080,7 +2101,6 @@ class KeepAwakeSystem {
             
             document.body.appendChild(this.videoElement);
             
-            // Try to play
             this.videoElement.play().catch(e => {
                 console.log('Video play failed:', e);
             });
@@ -2091,7 +2111,6 @@ class KeepAwakeSystem {
     }
     
     createSafeClickZones() {
-        // Add CSS animation to body
         const style = document.createElement('style');
         style.textContent = `
             @keyframes antiSleepPulse {
@@ -2120,7 +2139,6 @@ class KeepAwakeSystem {
         
         document.body.classList.add('anti-sleep-active');
         
-        // Create safe click zones in corners
         const corners = [
             { className: 'top-left', top: 0, left: 0 },
             { className: 'top-right', top: 0, right: 0 },
@@ -2144,20 +2162,16 @@ class KeepAwakeSystem {
     }
     
     stop() {
-        // Clear all intervals
         this.intervals.forEach(interval => clearInterval(interval));
         this.intervals = [];
         
-        // Stop auto-click
         stopAutoClick();
         
-        // Release wake lock
         if (this.wakeLock) {
             this.wakeLock.release();
             this.wakeLock = null;
         }
         
-        // Remove video
         if (this.videoElement) {
             this.videoElement.pause();
             if (this.videoElement.parentNode) {
@@ -2166,23 +2180,19 @@ class KeepAwakeSystem {
             this.videoElement = null;
         }
         
-        // Remove audio context
         if (this.audioContext) {
             this.audioContext.close();
             this.audioContext = null;
         }
         
-        // Remove CSS class
         document.body.classList.remove('anti-sleep-active');
         
-        // Remove safe click zones
         document.querySelectorAll('.safe-click-zone').forEach(zone => {
             if (zone.parentNode) {
                 zone.parentNode.removeChild(zone);
             }
         });
         
-        // Reset title
         const originalTitle = document.title.replace(/^•\s*/, '');
         document.title = originalTitle;
         
@@ -2190,21 +2200,17 @@ class KeepAwakeSystem {
     }
 }
 
-// Smart click function
 function performSmartClick() {
     if (!examInProgress) return;
     
     try {
-        // Strategy: Click on safe zones (corners)
         const safeZones = document.querySelectorAll('.safe-click-zone');
         if (safeZones.length > 0) {
-            // Pick a random safe zone
             const randomZone = safeZones[Math.floor(Math.random() * safeZones.length)];
             const rect = randomZone.getBoundingClientRect();
             const x = rect.left + rect.width / 2;
             const y = rect.top + rect.height / 2;
             
-            // Dispatch click event
             const clickEvent = new MouseEvent('click', {
                 view: window,
                 bubbles: true,
@@ -2217,7 +2223,6 @@ function performSmartClick() {
             randomZone.dispatchEvent(clickEvent);
             console.log(`🎯 Smart click on safe zone: ${randomZone.className}`);
         } else {
-            // Fallback: Click on body
             const x = Math.random() * window.innerWidth;
             const y = Math.random() * window.innerHeight;
             simulateRealClick(x, y);
@@ -2228,7 +2233,6 @@ function performSmartClick() {
     }
 }
 
-// Initialize keep awake system
 keepAwakeSystem = new KeepAwakeSystem();
 
 // ===== SYSTEM TRAY & SEARCH BAR SECURITY CLASS =====
@@ -2256,14 +2260,12 @@ class SystemTrayViolationDetector {
     }
     
     setupDetection() {
-        // 1. WINDOWS/META KEY DETECTION (Opens Start Menu/Search)
         document.addEventListener('keydown', (e) => {
             if (!examInProgress) return;
             
             const currentTime = Date.now();
             if (currentTime - this.lastViolationTime < 500) return;
             
-            // Windows/Command key (Meta key) - Opens Start Menu/Search
             if (e.key === 'Meta' || e.key === 'Win' || e.keyCode === 91 || e.keyCode === 92) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -2271,7 +2273,6 @@ class SystemTrayViolationDetector {
                 return false;
             }
             
-            // Windows+S (Windows Search)
             if ((e.key === 's' || e.key === 'S') && (e.metaKey || e.ctrlKey)) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -2279,7 +2280,6 @@ class SystemTrayViolationDetector {
                 return false;
             }
             
-            // Windows+R (Run dialog)
             if ((e.key === 'r' || e.key === 'R') && e.metaKey) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -2287,7 +2287,6 @@ class SystemTrayViolationDetector {
                 return false;
             }
             
-            // Windows+X (Power User menu)
             if ((e.key === 'x' || e.key === 'X') && e.metaKey) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -2295,7 +2294,6 @@ class SystemTrayViolationDetector {
                 return false;
             }
             
-            // Windows+D (Show desktop)
             if ((e.key === 'd' || e.key === 'D') && e.metaKey) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -2303,7 +2301,6 @@ class SystemTrayViolationDetector {
                 return false;
             }
             
-            // Alt+Tab (Task switching)
             if (e.key === 'Tab' && e.altKey) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -2311,7 +2308,6 @@ class SystemTrayViolationDetector {
                 return false;
             }
             
-            // Windows+Tab (Task View)
             if (e.key === 'Tab' && e.metaKey) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -2327,11 +2323,9 @@ class SystemTrayViolationDetector {
         this.systemTrayCheckInterval = setInterval(() => {
             if (!examInProgress) return;
             
-            // Check if window lost focus without tab switch (likely system tray)
             if (!document.hasFocus()) {
                 const currentTime = Date.now();
                 if (currentTime - lastTabSwitchTime > 3000) {
-                    // Window lost focus but no recent tab switch - likely system tray
                     this.handleViolation('Window focus lost to system tray/taskbar');
                 }
             }
@@ -2350,7 +2344,6 @@ class SystemTrayViolationDetector {
         
         const currentTime = Date.now();
         
-        // Prevent counting multiple violations in rapid succession
         if (currentTime - this.lastViolationTime < 1000) {
             console.log(`Ignoring rapid system tray violation: ${violationType}`);
             return;
@@ -2361,14 +2354,11 @@ class SystemTrayViolationDetector {
         
         console.log(`🚨 System Tray Violation #${this.violationCount}: ${violationType}`);
         
-        // Show warning to student
         this.showWarning(this.violationCount, violationType);
         
-        // SUBMIT EXAM AFTER 3 VIOLATIONS (Same as tab switches!)
         if (this.violationCount >= this.maxViolations) {
             console.log('🚨 3 system tray violations detected - submitting exam!');
             
-            // Show final warning
             this.showViolationOverlay(`
                 🚨 EXAM VIOLATION DETECTED
                 <br><br>
@@ -2379,7 +2369,6 @@ class SystemTrayViolationDetector {
                 Submitting exam in 3 seconds...
             `, 'red');
             
-            // Submit exam after delay
             setTimeout(() => {
                 if (examInProgress) {
                     submitExam();
@@ -2398,7 +2387,6 @@ class SystemTrayViolationDetector {
         const messageIndex = Math.min(count - 1, 2);
         showToast(messages[messageIndex], 'error', 5000);
         
-        // Show big warning overlay for serious violations
         if (count >= 2) {
             this.showViolationOverlay(`
                 ⚠️ SYSTEM TRAY VIOLATION
@@ -2465,7 +2453,6 @@ async function loadAnswerKey() {
     try {
         console.log("📥 LOADING ANSWER KEY FROM EXTERNAL FILE...");
         
-        // Load from external file
         const response = await fetch(ANSWER_KEY_URL);
         
         if (!response.ok) {
@@ -2475,28 +2462,38 @@ async function loadAnswerKey() {
         const text = await response.text();
         answerKey = parseAnswerKeyFile(text);
         
-        // Verify we have exactly 75 answers
-        if (answerKey.length !== 75) {
-            throw new Error(`Expected 75 answers, got ${answerKey.length}. Check the answer-key.txt format.`);
+        // Auto-check based on TOTAL_QUESTIONS
+        if (answerKey.length !== TOTAL_QUESTIONS) {
+            console.error(`❌ Expected ${TOTAL_QUESTIONS} answers, but got ${answerKey.length}`);
+            console.log("📊 Answers received:", answerKey);
+            throw new Error(`Expected ${TOTAL_QUESTIONS} answers, got ${answerKey.length}. Check your answer-key.txt format.`);
+        } else {
+            console.log(`✅ Perfect! ${TOTAL_QUESTIONS} answers loaded`);
         }
         
-        // Validate each answer
-        for (let i = 0; i < 75; i++) {
+        // Validate based on question types
+        for (let i = 0; i < TOTAL_QUESTIONS; i++) {
             const qNum = i + 1;
             const answer = answerKey[i];
             
-            // Determine question type
-            const isNumerical = 
-                (qNum >= 21 && qNum <= 25) ||    // Physics numerical
-                (qNum >= 46 && qNum <= 50) ||    // Chemistry numerical
-                (qNum >= 71 && qNum <= 75);      // Maths numerical
+            // Check if this is a numerical question
+            let isNumerical = false;
+            EXAM_SETUP.subjects.forEach(subject => {
+                if (qNum >= subject.start && qNum <= subject.end) {
+                    if (subject.numerical > 0 && qNum >= subject.numericalStart) {
+                        isNumerical = true;
+                    }
+                }
+            });
             
             if (isNumerical) {
-                if (!/^-?\d+(\.\d+)?$/.test(answer)) {
+                // Numerical questions can be numbers or empty
+                if (answer !== '' && !/^-?\d+(\.\d+)?$/.test(answer)) {
                     throw new Error(`Invalid numerical answer at Q${qNum}: "${answer}"`);
                 }
             } else {
-                if (!['A', 'B', 'C', 'D'].includes(answer)) {
+                // MCQ questions must be A, B, C, D, or empty
+                if (!['A', 'B', 'C', 'D', ''].includes(answer)) {
                     throw new Error(`Invalid MCQ answer at Q${qNum}: "${answer}"`);
                 }
             }
@@ -2504,18 +2501,14 @@ async function loadAnswerKey() {
         
         console.log("✅ EXTERNAL ANSWER KEY LOADED SUCCESSFULLY!");
         console.log("📊 Total answers:", answerKey.length);
-        console.log("📋 First 10 answers:", answerKey.slice(0, 10));
-        console.log("📋 Last 10 answers:", answerKey.slice(65, 75));
         
         keyLoaded = true;
         
-        // Initialize images array
         images = [];
-        for (let i = 1; i <= 75; i++) {
+        for (let i = 1; i <= TOTAL_QUESTIONS; i++) {
             images.push(`questions/${i}.png`);
         }
         
-        // Preload images
         await preloadAllImages();
         
         showToast('✅ Answer key loaded! Enter access code.', 'success', 3000);
@@ -2540,24 +2533,31 @@ async function loadAnswerKey() {
     }
 }
 
+// ===== Parse answer key file (auto-detects format) =====
 function parseAnswerKeyFile(text) {
     const lines = text.trim().split('\n');
     const answers = [];
     
+    console.log(`📝 Found ${lines.length} lines in answer key file`);
+    
     for (let line of lines) {
         line = line.trim();
         if (line) {
-            // Check if line contains multiple answers (like "BAAAB")
-            if (line.length > 1 && /^[A-D]{5}$/.test(line)) {
-                // Split combined answers like "BAAAB" into individual letters
-                answers.push(...line.split(''));
+            // Check if line has 5 characters (like "ABCDE") - MCQ batch
+            if (line.length === 5 && /^[A-D]{5}$/.test(line)) {
+                // Split the 5-character line into 5 separate answers
+                const lineAnswers = line.split('');
+                answers.push(...lineAnswers);
+                console.log(`📝 Line "${line}" → 5 MCQ answers:`, lineAnswers);
             } else {
-                // Single answer (numerical or single letter)
+                // Single answer (for numerical or single MCQ)
                 answers.push(line);
+                console.log(`📝 Single answer: "${line}"`);
             }
         }
     }
     
+    console.log(`✅ Total answers parsed: ${answers.length}`);
     return answers;
 }
 
@@ -2567,9 +2567,7 @@ async function preloadAllImages() {
     
     const imagePromises = [];
     
-    // Create array of image paths for 75 questions
-    for (let i = 1; i <= 75; i++) {
-        // Try multiple possible image paths
+    for (let i = 1; i <= TOTAL_QUESTIONS; i++) {
         const possiblePaths = [
             `questions/${i}.png`,
             `questions/Q${i}.png`,
@@ -2604,7 +2602,6 @@ async function preloadAllImages() {
 }
 
 function getBestImagePath(questionNumber) {
-    // Try multiple possible paths
     const possiblePaths = [
         `questions/${questionNumber}.png`,
         `questions/Q${questionNumber}.png`,
@@ -2618,19 +2615,16 @@ function getBestImagePath(questionNumber) {
         `images/Q${questionNumber}.jpg`
     ];
     
-    // Check which image is actually available
     for (const path of possiblePaths) {
         if (preloadedImages[path]) {
             return path;
         }
     }
     
-    // Return default path
     return `questions/${questionNumber}.png`;
 }
 
 function renderImageContainer(imagePath, questionNumber) {
-    // Check if image is preloaded
     const preloadedImg = preloadedImages[imagePath];
     
     if (preloadedImg) {
@@ -2643,7 +2637,6 @@ function renderImageContainer(imagePath, questionNumber) {
             </div>
         `;
     } else {
-        // Try to load image with error handling
         return `
             <div class="question-image-container">
                 <img src="${imagePath}" 
@@ -2684,7 +2677,6 @@ function retryImageLoad(questionNumber) {
     const idx = progress.currentIndex;
     const originalIndex = examData.originalOrder[idx] + 1;
     
-    // Try alternative image paths
     const alternativePaths = [
         `questions/${originalIndex}.png`,
         `questions/Q${originalIndex}.png`,
@@ -2709,7 +2701,6 @@ function retryImageLoad(questionNumber) {
         const img = new Image();
         img.onload = function() {
             console.log(`✅ Retry successful: ${path}`);
-            // Update the image in the container
             const container = document.querySelector('.question-image-container');
             if (container) {
                 container.innerHTML = `
@@ -2735,19 +2726,12 @@ function retryImageLoad(questionNumber) {
 function initPowerLossProtection() {
     console.log('⚡ Initializing Power Loss Protection System');
     
-    // Create connection status element
     createConnectionStatusElement();
-    
-    // Create auto-save indicator
     createAutoSaveIndicator();
-    
-    // Setup event listeners
     setupPowerLossEventListeners();
     
-    // Check for recovery on page load
     setTimeout(() => checkForPowerLossRecovery(), 1000);
     
-    // Start auto-save timer
     startAutoSaveTimer();
     
     console.log('✅ Power Loss Protection System Ready');
@@ -2775,7 +2759,6 @@ function createAutoSaveIndicator() {
 }
 
 function setupPowerLossEventListeners() {
-    // Online/offline detection
     window.addEventListener('online', () => {
         updateConnectionStatus(true);
         showToast('✅ Internet connection restored', 'success', 3000);
@@ -2788,18 +2771,15 @@ function setupPowerLossEventListeners() {
         forceSaveProgress();
     });
     
-    // Beforeunload (browser/tab close)
     window.addEventListener('beforeunload', (e) => {
         if (examInProgress) {
             forceSaveProgress();
-            // Optional: Show warning
             e.preventDefault();
             e.returnValue = 'Your exam progress is being saved. Are you sure you want to leave?';
             return e.returnValue;
         }
     });
     
-    // Visibility change (tab switch/minimize)
     document.addEventListener('visibilitychange', () => {
         if (document.hidden && examInProgress) {
             saveExamProgress();
@@ -2877,7 +2857,6 @@ function saveExamProgress() {
             }
         };
         
-        // MULTIPLE REDUNDANT SAVES
         localStorage.setItem(STORAGE_KEYS.EXAM_PROGRESS, JSON.stringify(saveData));
         localStorage.setItem(STORAGE_KEYS.ANSWERS_BACKUP, JSON.stringify(progress.answers));
         localStorage.setItem(STORAGE_KEYS.EXAM_STATE, JSON.stringify({
@@ -2922,7 +2901,6 @@ function checkForPowerLossRecovery() {
     try {
         const savedProgress = localStorage.getItem(STORAGE_KEYS.EXAM_PROGRESS);
         if (!savedProgress) {
-            // Also check for resume exam in student entry
             checkResumeExam();
             return;
         }
@@ -2975,46 +2953,31 @@ function showPowerLossRecoveryDialog(progressData, lastSaveTime) {
 function resumeFromPowerLoss(progressData) {
     console.log('🔄 Resuming exam from power loss recovery...');
     
-    // Hide recovery overlay
     document.getElementById('powerLossRecoveryOverlay').style.display = 'none';
-    
-    // Hide access denied screen if visible
     document.getElementById('accessDenied').style.display = 'none';
-    
-    // Show student entry screen
     document.getElementById('studentEntry').style.display = 'flex';
     
-    // Auto-fill student information from saved progress
     const student = progressData.progress.student;
     document.getElementById('stuName').value = student.name || '';
     document.getElementById('stuSection').value = student.sec || '';
     document.getElementById('stuRoll').value = student.roll || '';
     document.getElementById('stuAdm').value = student.adm || '';
     
-    // Hide the resume section (we're already resuming)
     document.getElementById('resumeExamSection').style.display = 'none';
     
-    // Store recovery data globally
     window.pendingRecoveryData = progressData;
     
-    // Show start button and modify it for resume
     document.getElementById('stuStartBtn').style.display = 'inline-block';
     
-    // Change start button text
     const startBtn = document.getElementById('stuStartBtn');
     startBtn.textContent = 'Continue Exam';
     
-    // Store original click handler
-    const originalClick = startBtn.onclick;
-    
-    // Override click handler for resume
     startBtn.onclick = function() {
         if (validateStudentInputs()) {
             startExamWithRecovery(progressData);
         }
     };
     
-    // Validate to show start button
     validateStudentInputs();
     
     showToast('✅ Recovery data loaded. Click "Continue Exam" to resume.', 'success', 5000);
@@ -3023,37 +2986,30 @@ function resumeFromPowerLoss(progressData) {
 function startExamWithRecovery(progressData) {
     console.log('🚀 Starting exam with recovery data...');
     
-    // Use the recovery data
     progress = progressData.progress;
     examData = progressData.examData;
     examStartTime = progressData.metadata.examStartTime;
     assignedForm = progressData.metadata.assignedForm;
     examInProgress = true;
     
-    // Calculate adjusted time based on elapsed time
     const timeElapsed = Math.floor((Date.now() - examStartTime) / 1000);
     progress.timeLeftSec = Math.max(0, EXAM_DURATION_MINUTES * 60 - timeElapsed);
     
-    // Hide student entry and show exam area
     document.getElementById('studentEntry').style.display = 'none';
     document.getElementById('examArea').style.display = 'block';
     
-    // Initialize exam
     renderQuestion();
     renderPalette();
     startTimer();
     updateNavButtons();
     
-    // Start keep-awake system
     keepAwakeSystem.start();
     
-    // Enable all security systems
     examSecurity.enable();
     systemTrayDetector.enable();
     
     showToast('✅ Exam resumed from saved progress', 'success', 4000);
     
-    // Save progress immediately
     saveExamProgress();
 }
 
@@ -3062,7 +3018,6 @@ function discardPowerLossRecovery() {
         clearSavedExam();
         document.getElementById('powerLossRecoveryOverlay').style.display = 'none';
         showToast('🗑️ Saved exam discarded', 'info', 3000);
-        // Show student entry for fresh start
         document.getElementById('accessDenied').style.display = 'none';
         document.getElementById('studentEntry').style.display = 'flex';
     }
@@ -3078,10 +3033,8 @@ function checkResumeExam() {
         const hoursSinceSave = (Date.now() - lastSaveTime) / (1000 * 60 * 60);
         
         if (hoursSinceSave < RECOVERY_WINDOW_HOURS) {
-            // Show resume section in student entry
             document.getElementById('resumeExamSection').style.display = 'block';
             
-            // Fill resume info
             const student = progressData.progress.student;
             const answeredQuestions = progressData.progress.answers.filter(a => a !== null).length;
             const totalQuestions = progressData.progress.answers.length;
@@ -3094,12 +3047,10 @@ function checkResumeExam() {
             document.getElementById('resumeProgress').textContent = `${answeredQuestions}/${totalQuestions} questions`;
             document.getElementById('resumeTimeLeft').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             
-            // Setup resume button
             document.getElementById('resumeExamBtn').onclick = function() {
                 resumeFromPowerLoss(progressData);
             };
             
-            // Setup start new button
             document.getElementById('startNewBtn').onclick = function() {
                 if (confirm('Are you sure you want to start a new exam? The current progress will be lost.')) {
                     clearSavedExam();
@@ -3456,9 +3407,7 @@ document.addEventListener('visibilitychange', function() {
         console.log(`Tab switch detected: ${tabSwitchCount}/3`);
         showTabSwitchWarning(tabSwitchCount);
         
-        // Also check if this might be a system tray click
         if (currentTime - lastTabSwitchTime > 2000) {
-            // More than 2 seconds since last tab switch - could be system tray
             systemTrayDetector.handleViolation('Possible system tray/taskbar click');
         }
         
@@ -3473,130 +3422,105 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-// ===== NUMERICAL INPUT HANDLING FUNCTIONS =====
+// ===== SIMPLIFIED NUMERICAL INPUT HANDLING - ACCEPTS ANY TEXT =====
 function handleNumericalInput(inputElement, questionIndex) {
-  const value = inputElement.value;
-  const cleanedValue = value.replace(/[^0-9\.\-]/g, '');
-  
-  const decimalCount = (cleanedValue.match(/\./g) || []).length;
-  if (decimalCount > 1) {
-    const parts = cleanedValue.split('.');
-    inputElement.value = parts[0] + '.' + parts.slice(1).join('');
-  } else if (cleanedValue !== value) {
-    inputElement.value = cleanedValue;
-  }
-  
-  setTimeout(() => {
+    // Simply update the progress without any filtering
+    progress.answers[questionIndex] = inputElement.value;
+    updatePalette();
     if (examInProgress) {
-      saveExamProgress();
+        setTimeout(() => saveExamProgress(), 500);
     }
-  }, 500);
 }
 
 function handleNumericalKeyPress(event, questionIndex) {
-  const allowedKeys = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '-', 'Enter', 'Backspace', 'Delete', 'Tab'];
-  
-  if (!allowedKeys.includes(event.key) && !event.ctrlKey && !event.altKey && !event.metaKey) {
-    event.preventDefault();
-    return;
-  }
-  
-  if (event.key === 'Enter') {
-    submitNumericalAnswer(questionIndex);
-    event.preventDefault();
-  }
+    // Allow any key press
+    if (event.key === 'Enter') {
+        submitNumericalAnswer(questionIndex);
+        event.preventDefault();
+    }
 }
 
 function handleKeypadButton(button, questionIndex) {
-  const input = document.getElementById('fillBlankInput');
-  if (!input) return;
-  
-  let currentValue = input.value;
-  
-  switch(button) {
-    case 'C':
-      input.value = '';
-      break;
-    case '✓':
-      submitNumericalAnswer(questionIndex);
-      break;
-    default:
-      input.value = currentValue + button;
-      break;
-  }
-  
-  input.focus();
+    const input = document.getElementById('fillBlankInput');
+    if (!input) return;
+    
+    let currentValue = input.value;
+    
+    switch(button) {
+        case 'C':
+            input.value = '';
+            progress.answers[questionIndex] = '';
+            break;
+        case '✓':
+            submitNumericalAnswer(questionIndex);
+            break;
+        default:
+            input.value = currentValue + button;
+            progress.answers[questionIndex] = input.value;
+            break;
+    }
+    
+    updatePalette();
+    if (examInProgress) {
+        setTimeout(() => saveExamProgress(), 500);
+    }
+    input.focus();
 }
 
 function submitNumericalAnswer(questionIndex) {
-  const input = document.getElementById('fillBlankInput');
-  if (!input) return;
-  
-  const answer = input.value.trim();
-  
-  if (answer === '') {
-    showToast('Please enter a numerical answer', 'warning', 2000);
-    return;
-  }
-  
-  if (!/^-?\d+(\.\d+)?$/.test(answer)) {
-    showToast('Please enter a valid number', 'error', 2000);
-    return;
-  }
-  
-  progress.answers[questionIndex] = answer;
-  showToast('✓ Answer submitted!', 'success', 2000);
-  updatePalette();
-  saveExamProgress();
-  
-  setTimeout(() => {
-    if (questionIndex < examData.files.length - 1) {
-      progress.currentIndex++;
-      renderQuestion();
-      updateNavButtons();
+    const input = document.getElementById('fillBlankInput');
+    if (!input) return;
+    
+    const answer = input.value.trim();
+    
+    if (answer === '') {
+        showToast('Please enter an answer', 'warning', 2000);
+        return;
     }
-  }, 1500);
+    
+    // REMOVE any validation - accept ANY input
+    progress.answers[questionIndex] = answer;
+    showToast('✓ Answer submitted!', 'success', 2000);
+    updatePalette();
+    saveExamProgress();
+    
+    setTimeout(() => {
+        if (questionIndex < examData.files.length - 1) {
+            progress.currentIndex++;
+            renderQuestion();
+            updateNavButtons();
+        }
+    }, 1500);
 }
 
-// ===== GOOGLE FORMS FUNCTIONS =====
-function getFormFields(section) {
-    return {
-        ...COMMON_FIELDS,
-        ALL_ANSWERS: ANSWERS_FIELDS[section]
-    };
+function getFormFields(formId) {
+    return FORM_FIELDS;
 }
 
 function getAssignedForm(studentData) {
-    const forms = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    const forms = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'];
     
     if (studentData.roll && !isNaN(studentData.roll)) {
         const rollNumber = parseInt(studentData.roll);
         const formIndex = (rollNumber - 1) % forms.length;
+        console.log("Assigned Form:", forms[formIndex]);
         return forms[formIndex];
     }
     
-    const hashString = `${studentData.name}|${studentData.roll}|${studentData.adm}`;
-    let hash = 0;
-    for (let i = 0; i < hashString.length; i++) {
-        hash = ((hash << 5) - hash) + hashString.charCodeAt(i);
-        hash = hash & hash;
-    }
-    return forms[Math.abs(hash) % forms.length];
+    return '1';
 }
 
 // ===== PREPARE EXAM DATA =====
 function prepareExamData() {
-  examData.files = []; examData.subjectNames = []; examData.keys = []; examData.originalOrder = []; examData.questionTypes = [];
-  
-  const subjectRanges = [
-    { name: "Physics", start: 1, end: 25 },
-    { name: "Chemistry", start: 26, end: 50 },
-    { name: "Maths", start: 51, end: 75 }
-  ];
+  examData.files = []; 
+  examData.subjectNames = []; 
+  examData.keys = []; 
+  examData.originalOrder = []; 
+  examData.questionTypes = [];
   
   let groups = [];
   
-  subjectRanges.forEach(subject => {
+  EXAM_SETUP.subjects.forEach(subject => {
     const subjectQuestions = [];
     const subjectKeys = [];
     const subjectOriginalOrder = [];
@@ -3609,10 +3533,9 @@ function prepareExamData() {
         subjectKeys.push(answerKey[imgIndex]);
         subjectOriginalOrder.push(imgIndex);
         
+        // Determine question type
         let questionType = 'mcq';
-        if ((subject.name === "Physics" && i >= 21 && i <= 25) ||
-            (subject.name === "Chemistry" && i >= 46 && i <= 50) ||
-            (subject.name === "Maths" && i >= 71 && i <= 75)) {
+        if (subject.numerical > 0 && i >= subject.numericalStart) {
           questionType = 'fill-blank';
         }
         subjectTypes.push(questionType);
@@ -3644,13 +3567,12 @@ function prepareExamData() {
   
   console.log("🎯 EXAM DATA VERIFICATION:");
   console.log("Total Questions:", examData.files.length);
-  console.log("Subject distribution:");
-  console.log("- Physics:", examData.subjectNames.filter(s => s === "Physics").length);
-  console.log("- Chemistry:", examData.subjectNames.filter(s => s === "Chemistry").length);
-  console.log("- Maths:", examData.subjectNames.filter(s => s === "Maths").length);
+  EXAM_SETUP.subjects.forEach(subject => {
+    console.log(`- ${subject.name}:`, examData.subjectNames.filter(s => s === subject.name).length);
+  });
 }
 
-// ===== FIXED: RENDER QUESTION WITHOUT DUPLICATE INFO =====
+// ===== RENDER QUESTION =====
 function renderQuestion() {
   const idx = progress.currentIndex;
   const container = document.getElementById('questionContainer');
@@ -3659,7 +3581,7 @@ function renderQuestion() {
   const imagePath = getBestImagePath(originalIndex);
   const questionType = examData.questionTypes[idx];
   
-  console.log(`🖼️ Loading: ${imagePath} (Question ${originalIndex}/75) - ${examData.subjectNames[idx]} - ${questionType}`);
+  console.log(`🖼️ Loading: ${imagePath} (Question ${originalIndex}/${TOTAL_QUESTIONS}) - ${examData.subjectNames[idx]} - ${questionType}`);
   
   let optionsHTML = '';
   
@@ -3667,16 +3589,14 @@ function renderQuestion() {
     optionsHTML = `
       <div class="fill-blank-container">
         <div style="margin: 20px 0; font-weight: bold; color: #4B0082; font-size: 18px;">
-          Enter numerical answer:
+          Enter answer:
         </div>
         <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin: 25px 0;">
-          <input type="number" 
+          <input type="text" 
                  id="fillBlankInput" 
                  class="fill-blank-input"
-                 placeholder="Enter number"
+                 placeholder="Enter answer"
                  value="${progress.answers[idx] || ''}"
-                 min="0"
-                 step="any"
                  style="
                    padding: 12px 18px;
                    font-size: 22px;
@@ -3747,8 +3667,6 @@ function renderQuestion() {
     `;
   }
   
-  // FIXED: Removed duplicate question number and subject display
-  // Only shows image and options
   container.innerHTML = `
     <div class="question-transition question-fade-in">
       ${renderImageContainer(imagePath, originalIndex)}
@@ -3756,7 +3674,6 @@ function renderQuestion() {
     </div>
   `;
   
-  // Update header with question info (shows it once in header)
   updateQuestionInfo();
   
   if (questionType !== 'fill-blank') {
@@ -3789,7 +3706,6 @@ function selectOption(opt) {
     updateOptionButtons();
     updatePalette();
     
-    // Auto-save on answer change
     if (examInProgress) {
         setTimeout(() => saveExamProgress(), 500);
     }
@@ -3997,18 +3913,15 @@ function startExam(studentKey) {
     localStorage.setItem(studentKey, Date.now());
     prepareExamData();
     
-    // Check if we have recovery data
     if (window.pendingRecoveryData) {
         progress = window.pendingRecoveryData.progress;
         examData = window.pendingRecoveryData.examData;
         examStartTime = window.pendingRecoveryData.metadata.examStartTime;
         assignedForm = window.pendingRecoveryData.metadata.assignedForm;
         
-        // Calculate adjusted time
         const timeElapsed = Math.floor((Date.now() - examStartTime) / 1000);
         progress.timeLeftSec = Math.max(0, EXAM_DURATION_MINUTES * 60 - timeElapsed);
     } else {
-        // Start fresh exam
         progress = {
             answers: Array(examData.files.length).fill(null),
             review: Array(examData.files.length).fill(false),
@@ -4021,7 +3934,6 @@ function startExam(studentKey) {
 
     examInProgress = true;
     
-    // Start keep-awake system
     keepAwakeSystem.start();
     
     document.getElementById('studentEntry').style.display = "none";
@@ -4031,20 +3943,19 @@ function startExam(studentKey) {
     startTimer(); 
     updateNavButtons();
     
-    // Enable all security systems
     systemTrayDetector.enable();
     
     saveExamProgress();
 }
 
-// ===== FIXED: UPDATE QUESTION INFO IN HEADER =====
+// ===== UPDATE QUESTION INFO IN HEADER =====
 function updateQuestionInfo() {
   const idx = progress.currentIndex;
   const stuInfoEl = document.getElementById('stuInfo');
   const stuQInfoEl = document.getElementById('stuQInfo');
   
   if (stuInfoEl) stuInfoEl.textContent = `${progress.student.name} | ${progress.student.sec} | Roll: ${progress.student.roll}`;
-  if (stuQInfoEl) stuQInfoEl.textContent = `Question ${idx+1} of 75 | ${examData.subjectNames[idx]}`;
+  if (stuQInfoEl) stuQInfoEl.textContent = `Question ${idx+1} of ${TOTAL_QUESTIONS} | ${examData.subjectNames[idx]}`;
 }
 
 // ===== PALETTE FUNCTIONS =====
@@ -4231,7 +4142,7 @@ function startTimer() {
 
 // ===== GOOGLE FORMS SUBMISSION FUNCTIONS =====
 function captureAllAnswersData() {
-    console.log("🎯 Capturing all student answers for 75 questions...");
+    console.log(`🎯 Capturing all student answers for ${TOTAL_QUESTIONS} questions...`);
     
     const answersData = {
         student: progress.student,
@@ -4243,13 +4154,12 @@ function captureAllAnswersData() {
         structure: QUESTION_STRUCTURE
     };
     
-    // Capture all 75 answers in original order
     for (let i = 0; i < examData.files.length; i++) {
         const originalIndex = examData.originalOrder[i];
         const questionType = examData.questionTypes[i];
         const answerRecord = {
-            questionNumber: originalIndex + 1, // Original Q1-Q75
-            shuffledPosition: i + 1, // Current position in exam
+            questionNumber: originalIndex + 1,
+            shuffledPosition: i + 1,
             subject: examData.subjectNames[i],
             questionType: questionType,
             studentAnswer: progress.answers[i] || 'N',
@@ -4261,10 +4171,8 @@ function captureAllAnswersData() {
         answersData.answers.push(answerRecord);
     }
     
-    // Sort by original question number (Q1-Q75)
     answersData.answers.sort((a, b) => a.questionNumber - b.questionNumber);
     
-    // Calculate subject-wise summary
     const subjectSummary = {};
     answersData.answers.forEach(answer => {
         const subject = answer.subject;
@@ -4282,7 +4190,6 @@ function captureAllAnswersData() {
         
         subjectSummary[subject].total++;
         
-        // Track by question type
         if (answer.questionType === 'mcq') {
             subjectSummary[subject].mcq.total++;
             if (answer.isCorrect) subjectSummary[subject].mcq.correct++;
@@ -4314,123 +4221,151 @@ function captureAllAnswersData() {
     return answersData;
 }
 
+// ===== Format answers as string for Google Forms =====
 function formatAllAnswersString(answers) {
-    console.log("🎯 Formatting 75 answers in ORIGINAL sequence...");
+    console.log(`🎯 Formatting ${TOTAL_QUESTIONS} answers...`);
     
-    // Create array for original order answers (Q1 to Q75)
-    const originalOrderAnswers = new Array(75);
+    // Create array in original order (1 to TOTAL_QUESTIONS)
+    const originalOrderAnswers = new Array(TOTAL_QUESTIONS);
     
-    // Map shuffled answers back to ORIGINAL order Q1-Q75
+    // Fill with 'N' by default
+    for (let i = 0; i < TOTAL_QUESTIONS; i++) {
+        originalOrderAnswers[i] = 'N';
+    }
+    
+    // Map shuffled answers to original order
     examData.originalOrder.forEach((originalIndex, shuffledIndex) => {
-        const studentAnswer = answers[shuffledIndex] || 'N';
-        originalOrderAnswers[originalIndex] = studentAnswer;
+        const studentAnswer = answers[shuffledIndex];
+        if (studentAnswer !== null && studentAnswer !== undefined && studentAnswer !== '') {
+            originalOrderAnswers[originalIndex] = studentAnswer;
+        }
     });
     
-    // Join with commas
+    // Join with commas to create single string
     const result = originalOrderAnswers.join(',');
     
-    console.log("✅ Answers formatted:");
-    console.log("Total answers: 75");
-    console.log("Answered:", answers.filter(a => a !== null).length);
+    console.log("✅ Answers formatted:", result.substring(0, 50) + "...");
+    console.log("Total length:", result.length, "characters");
     
     return result;
 }
 
 function calculateSubjectMarks(summary) {
-    let maths = 0, physics = 0, chemistry = 0, total = 0;
+    const marks = {};
+    let total = 0;
     
+    // Initialize all subjects from setup
+    EXAM_SETUP.subjects.forEach(subject => {
+        marks[subject.name.toLowerCase()] = 0;
+    });
+    
+    // Calculate marks for each subject
     for (let subject in summary) {
         const subjectLower = subject.toLowerCase();
-        if (subjectLower.includes('math')) maths = summary[subject].marks;
-        else if (subjectLower.includes('phy')) physics = summary[subject].marks;
-        else if (subjectLower.includes('chem')) chemistry = summary[subject].marks;
+        for (let setupSubject of EXAM_SETUP.subjects) {
+            if (subjectLower.includes(setupSubject.name.toLowerCase())) {
+                marks[setupSubject.name.toLowerCase()] = summary[subject].marks;
+                break;
+            }
+        }
         total += summary[subject].marks;
     }
     
-    return { maths, physics, chemistry, total };
+    marks.total = total;
+    return marks;
 }
 
+// ===== UNIVERSAL SUBMISSION FUNCTION =====
 async function submitToGoogleForms(answersData) {
     const FORM_URL = GOOGLE_FORMS[assignedForm];
     
     if (!FORM_URL) {
         console.error(`❌ No Google Form URL found for form ${assignedForm}`);
-        updateSubmissionStatus('error', `No Google Form URL found for form ${assignedForm}`);
         saveSubmissionLocally(answersData);
         return false;
     }
 
     try {
-        // Get the correct form fields for this section
-        const formFields = getFormFields(assignedForm);
-        
-        // Prepare the form data
+        const marks = calculateSubjectMarks(answersData.summary);
         const formData = new URLSearchParams();
         
-        // Basic student information
-        formData.append(formFields.STUDENT_NAME, answersData.student.name);
-        formData.append(formFields.SECTION, answersData.student.sec);
-        formData.append(formFields.ROLL_NUMBER, answersData.student.roll);
-        formData.append(formFields.ADMISSION_NUMBER, answersData.student.adm);
+        // Student information (ALWAYS sent)
+        formData.append(FORM_FIELDS.STUDENT_NAME, answersData.student.name);
+        formData.append(FORM_FIELDS.SECTION, answersData.student.sec);
+        formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
+        formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
         
-        // Calculate and add marks
-        const marks = calculateSubjectMarks(answersData.summary);
-        formData.append(formFields.MATHS_MARKS, marks.maths.toFixed(2));
-        formData.append(formFields.PHYSICS_MARKS, marks.physics.toFixed(2));
-        formData.append(formFields.CHEMISTRY_MARKS, marks.chemistry.toFixed(2));
-        formData.append(formFields.TOTAL_MARKS, marks.total.toFixed(2));
-        
-        // Add timestamp
-        formData.append(formFields.TIMESTAMP, new Date().toLocaleString());
-        
-        // ADD ALL ANSWERS
-        const allAnswersString = formatAllAnswersString(progress.answers);
-        formData.append(formFields.ALL_ANSWERS, allAnswersString);
-        
-        console.log("📤 Submitting to Google Forms:");
-        console.log("Form:", assignedForm);
-        console.log("Student:", answersData.student.name);
-        console.log("Answers String:", allAnswersString.substring(0, 100) + "...");
-
-        // Show pending status
-        updateSubmissionStatus('pending', 'Submitting to Google Forms...');
-
-        // Submit to Google Forms with timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-        
-        const response = await fetch(FORM_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: formData,
-            signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        console.log("✅ Google Forms submission completed");
-        updateSubmissionStatus('success', '✅ Answers successfully submitted to Google Forms!');
-        
-        // Clear local storage after successful submission
-        clearSavedExam();
-        
-        return true;
-        
-    } catch (error) {
-        console.error("❌ Google Forms submission failed:", error);
-        
-        if (error.name === 'AbortError') {
-            updateSubmissionStatus('error', '❌ Submission timeout. Your answers have been saved locally.');
-        } else {
-            updateSubmissionStatus('error', '❌ Failed to submit to Google Forms. Your answers have been saved locally.');
+        // ===== SEND ONLY ACTIVE SUBJECTS =====
+        for (let subject of ACTIVE_EXAM_SUBJECTS) {
+            switch(subject) {
+                case "PHYSICS":
+                    formData.append(FORM_FIELDS.PHYSICS, marks.physics?.toFixed(2) || "0.00");
+                    console.log("✓ Physics sent:", marks.physics?.toFixed(2) || "0.00");
+                    break;
+                    
+                case "CHEMISTRY":
+                    formData.append(FORM_FIELDS.CHEMISTRY, marks.chemistry?.toFixed(2) || "0.00");
+                    console.log("✓ Chemistry sent:", marks.chemistry?.toFixed(2) || "0.00");
+                    break;
+                    
+                case "MATHS":
+                    formData.append(FORM_FIELDS.MATHS, marks.maths?.toFixed(2) || "0.00");
+                    console.log("✓ Maths sent:", marks.maths?.toFixed(2) || "0.00");
+                    break;
+                    
+                case "MATHS_A":
+                    formData.append(FORM_FIELDS.MATHS_A, marks.maths?.toFixed(2) || "0.00");
+                    console.log("✓ Maths-A sent:", marks.maths?.toFixed(2) || "0.00");
+                    break;
+                    
+                case "MATHS_B":
+                    formData.append(FORM_FIELDS.MATHS_B, marks.maths?.toFixed(2) || "0.00");
+                    console.log("✓ Maths-B sent:", marks.maths?.toFixed(2) || "0.00");
+                    break;
+                    
+                case "BOTANY":
+                    formData.append(FORM_FIELDS.BOTANY, "0.00");
+                    console.log("✓ Botany sent: 0.00");
+                    break;
+                    
+                case "ZOOLOGY":
+                    formData.append(FORM_FIELDS.ZOOLOGY, "0.00");
+                    console.log("✓ Zoology sent: 0.00");
+                    break;
+                    
+                case "BZ":
+                    formData.append(FORM_FIELDS.BZ, "0.00");
+                    console.log("✓ BZ sent: 0.00");
+                    break;
+            }
         }
         
-        // Save locally for manual recovery
-        saveSubmissionLocally(answersData);
+        // ALWAYS send these
+        formData.append(FORM_FIELDS.TOTAL_MARKS, marks.total.toFixed(2));
         
+        // Format all answers as comma-separated string
+        const allAnswersString = formatAllAnswersString(progress.answers);
+        formData.append(FORM_FIELDS.ALL_ANSWERS, allAnswersString);
+        
+        console.log("✅ Final submission with subjects:", ACTIVE_EXAM_SUBJECTS.join(", "));
+        console.log("📤 Total marks:", marks.total.toFixed(2));
+        console.log("📤 Answers string length:", allAnswersString.length);
+        
+        await fetch(FORM_URL, {
+            method: "POST",
+            mode: "no-cors",
+            body: formData
+        });
+        
+        console.log("✅ Google Forms submission completed");
+        showToast('✅ Exam submitted successfully!', 'success', 5000);
+        
+        clearSavedExam();
+        return true;
+    } catch (error) {
+        console.error("❌ Submission error:", error);
+        saveSubmissionLocally(answersData);
+        showToast('⚠️ Submission saved locally', 'warning', 5000);
         return false;
     }
 }
@@ -4488,7 +4423,6 @@ async function submitToGoogleFormsWithRetry(answersData, maxRetries = 3) {
             }
             
             if (attempt < maxRetries) {
-                // Wait before retry (exponential backoff)
                 const delay = Math.min(1000 * Math.pow(2, attempt - 1), 10000);
                 console.log(`⏳ Retrying in ${delay/1000} seconds...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
@@ -4498,7 +4432,6 @@ async function submitToGoogleFormsWithRetry(answersData, maxRetries = 3) {
             console.error(`❌ Submission error (attempt ${attempt}):`, error);
             
             if (attempt === maxRetries) {
-                // Last attempt failed, save locally
                 saveSubmissionLocally(answersData);
                 return { success: false, error: error.message, savedLocally: true };
             }
@@ -4513,7 +4446,6 @@ function submitExam() {
   if (hasSubmitted) return;
   clearInterval(timerInterval);
   
-  // Stop keep-awake system
   keepAwakeSystem.stop();
   
   if (autoSaveTimer) {
@@ -4524,7 +4456,6 @@ function submitExam() {
   hasSubmitted = true;
   examInProgress = false;
   
-  // Disable all security systems
   examSecurity.disable();
   systemTrayDetector.disable();
   
@@ -4568,15 +4499,13 @@ function submitExam() {
   
   console.log("🎯 FINAL SUBMISSION DATA:");
   console.log("Student:", progress.student.name);
+  console.log("Section:", progress.student.sec);
   console.log("Subject Data:", subjData);
   console.log("Tab switches:", tabSwitchCount);
   console.log("System tray violations:", systemTrayDetector.violationCount);
 
-  // ===== GOOGLE FORMS SUBMISSION =====
-  // Capture all answers data
   const answersData = captureAllAnswersData();
   
-  // Submit to Google Forms with retry logic
   submitToGoogleFormsWithRetry(answersData).then(result => {
     if (result.success) {
       console.log('✅ Google Forms submission successful');
@@ -4590,7 +4519,6 @@ function submitExam() {
     }
   });
 
-  // Show summary immediately
   showSummaryInterface(subjData);
 }
 
@@ -4867,10 +4795,7 @@ document.addEventListener('keydown', function(e) {
     const questionType = examData.questionTypes[idx];
     
     if (questionType === 'fill-blank') {
-      // Allow number keys
-      if ((e.key >= '0' && e.key <= '9') || e.key === '.' || e.key === '-') {
-        // Already handled by input field
-      }
+      // Allow any keys
     } else {
       const keyMap = {'1': 'A', '2': 'B', '3': 'C', '4': 'D'};
       if (keyMap[e.key]) {
@@ -4887,19 +4812,24 @@ document.addEventListener('keydown', function(e) {
 
 // ===== INITIAL SETUP =====
 window.addEventListener('load', function() {
-  console.log('LFJC Online Exam System Initialized (75 Questions)');
+  console.log(`🎯 LFJC Online Exam System - ${TOTAL_QUESTIONS} Questions`);
   console.log('📚 Question Structure:');
-  console.log('• Physics: Q1-20 (MCQ), Q21-25 (Numerical Input)');
-  console.log('• Chemistry: Q26-45 (MCQ), Q46-50 (Numerical Input)');
-  console.log('• Maths: Q51-70 (MCQ), Q71-75 (Numerical Input)');
+  EXAM_SETUP.subjects.forEach(s => {
+    if (s.numerical > 0) {
+      console.log(`• ${s.name}: Q${s.start}-${s.start + s.mcq - 1} (MCQ), Q${s.numericalStart}-${s.end} (Numerical Input)`);
+    } else {
+      console.log(`• ${s.name}: Q${s.start}-${s.end} (MCQ)`);
+    }
+  });
   console.log('🔒 Full-Screen Security Active');
   console.log('📊 Tab Switching Detection: 3 switches total submit exam');
   console.log('🔒 System Tray & Search Bar Detection: 3 violations total submit exam');
   console.log('⚡ POWER LOSS PROTECTION: Auto-save every 15 seconds');
   console.log('📤 GOOGLE FORMS SUBMISSION: Enabled');
-  console.log('📁 EXTERNAL ANSWER KEY: Will load from answer-key.txt');
+  console.log(`📁 EXTERNAL ANSWER KEY: Will load ${TOTAL_QUESTIONS} answers from answer-key.txt`);
   console.log('🖱️ AUTO-CLICK SYSTEM: Clicks every 30 seconds to prevent screen sleep');
   console.log('🔋 KEEP-AWAKE SYSTEM: Multiple layers to prevent screen sleep');
+  console.log('✅ Active subjects for Google Forms:', ACTIVE_EXAM_SUBJECTS.join(", "));
   
   document.getElementById('accessDenied').style.display = 'flex';
   document.getElementById('studentEntry').style.display = 'none';
@@ -4912,28 +4842,24 @@ window.addEventListener('load', function() {
   
   document.getElementById('accessCode').focus();
   
-  // Initialize System Tray Security
   systemTrayDetector = new SystemTrayViolationDetector();
   
-  // Load answer key from external file
   loadAnswerKey().then(success => {
     if (success) {
       console.log("✅ External answer key loaded successfully!");
-      showToast('✅ OK', 'success', 3000);
+      showToast('✅ Answer key loaded!', 'success', 3000);
     }
   });
   
-  // Initialize power loss protection
   setTimeout(() => {
     initPowerLossProtection();
   }, 1000);
 });
 
-console.log("🎯 LFJC Online Exam System Loaded Successfully");
+console.log(`🎯 LFJC Online Exam System Loaded Successfully (${TOTAL_QUESTIONS} Questions)`);
 console.log("📁 Loading answer key from: " + ANSWER_KEY_URL);
-console.log("✅ All security systems integrated: Full-screen, Tab switching, System tray, Power loss recovery");
-console.log("🖱️ Auto-click system enabled: Clicks every 30 seconds to prevent screen sleep");
-console.log("🔋 Keep-awake system: Wake Lock, silent video, keyboard activity, safe click zones");
-</script>
+console.log(`📁 Expecting ${TOTAL_QUESTIONS} answers`);
+console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "));
+</script> 
 </body>
 </html>
