@@ -4150,22 +4150,17 @@ function startTimer() {
 
 // ===== GOOGLE FORMS SUBMISSION FUNCTIONS =====
 function captureAllAnswersData() {
-    console.log("🎯 Capturing all student answers for 75 questions...");
+    // Get values DIRECTLY from inputs
+    const sectionValue = document.getElementById('stuSection').value;
     
-    // Get the CURRENT values directly from inputs
-    const currentName = document.getElementById('stuName')?.value.trim() || '';
-    const currentSection = document.getElementById('stuSection')?.value.trim() || '';
-    const currentRoll = document.getElementById('stuRoll')?.value.trim() || '';
-    const currentAdm = document.getElementById('stuAdm')?.value.trim() || '';
-    
-    console.log('📝 CAPTURING - Current section value:', currentSection);
+    console.log('📸 CAPTURING - Raw section:', sectionValue);
     
     const answersData = {
         student: {
-            name: currentName,
-            sec: currentSection,  // ← USING CURRENT VALUE, NOT progress.student.sec
-            roll: currentRoll,
-            adm: currentAdm
+            name: document.getElementById('stuName').value,
+            sec: sectionValue,  // RAW value, no modification
+            roll: document.getElementById('stuRoll').value,
+            adm: document.getElementById('stuAdm').value
         },
         timestamp: new Date().toISOString(),
         examId: generateExamId(),
@@ -4175,6 +4170,61 @@ function captureAllAnswersData() {
         structure: QUESTION_STRUCTURE
     };
     
+    // ... rest of your answers code stays the same
+    for (let i = 0; i < examData.files.length; i++) {
+        const originalIndex = examData.originalOrder[i];
+        const questionType = examData.questionTypes[i];
+        const answerRecord = {
+            questionNumber: originalIndex + 1,
+            shuffledPosition: i + 1,
+            subject: examData.subjectNames[i],
+            questionType: questionType,
+            studentAnswer: progress.answers[i] || 'N',
+            correctAnswer: examData.keys[i],
+            isCorrect: progress.answers[i] === examData.keys[i],
+            isReviewed: progress.review[i]
+        };
+        answersData.answers.push(answerRecord);
+    }
+    
+    answersData.answers.sort((a, b) => a.questionNumber - b.questionNumber);
+    
+    // Calculate subject summary
+    const subjectSummary = {};
+    answersData.answers.forEach(answer => {
+        const subject = answer.subject;
+        if (!subjectSummary[subject]) {
+            subjectSummary[subject] = {
+                total: 0, correct: 0, wrong: 0, notAttempted: 0, marks: 0,
+                mcq: { total: 0, correct: 0 },
+                fillBlank: { total: 0, correct: 0 }
+            };
+        }
+        subjectSummary[subject].total++;
+        if (answer.questionType === 'mcq') {
+            subjectSummary[subject].mcq.total++;
+            if (answer.isCorrect) subjectSummary[subject].mcq.correct++;
+        } else {
+            subjectSummary[subject].fillBlank.total++;
+            if (answer.isCorrect) subjectSummary[subject].fillBlank.correct++;
+        }
+        if (answer.isCorrect) {
+            subjectSummary[subject].correct++;
+            subjectSummary[subject].marks += MARK_PER_CORRECT;
+        } else if (answer.studentAnswer === 'N') {
+            subjectSummary[subject].notAttempted++;
+        } else {
+            subjectSummary[subject].wrong++;
+            subjectSummary[subject].marks += MARK_PER_WRONG;
+        }
+    });
+    
+    answersData.summary = subjectSummary;
+    
+    console.log('✅ Final student data:', answersData.student);
+    
+    return answersData;
+}
     // Capture all 75 answers in original order
     for (let i = 0; i < examData.files.length; i++) {
         const originalIndex = examData.originalOrder[i];
