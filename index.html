@@ -5113,6 +5113,55 @@ window.submitToGoogleForms = async function(answersData) {
 
 console.log('✅ Test code added - check console on submission');
 </script>
+  <script>
+// ===== ABSOLUTE LAST RESORT - OVERRIDE EVERYTHING =====
+(function() {
+    console.log('💥 APPLYING NUCLEAR FIX');
+    
+    // Store the original submit function
+    const originalSubmitExam = window.submitExam;
+    
+    // COMPLETELY replace the submitExam function
+    window.submitExam = function() {
+        console.log('📤 NUCLEAR SUBMIT - Getting section value');
+        
+        // Get section value DIRECTLY from input
+        const sectionInput = document.getElementById('stuSection');
+        const sectionValue = sectionInput ? sectionInput.value.trim() : '';
+        
+        console.log('✅ SECTION VALUE:', sectionValue);
+        
+        // Store it in MULTIPLE places
+        if (progress && progress.student) {
+            progress.student.sec = sectionValue;
+        }
+        
+        // Call the original function
+        if (originalSubmitExam) {
+            return originalSubmitExam.apply(this, arguments);
+        }
+    };
+    
+    // Also override the capture function
+    const originalCapture = window.captureAllAnswersData;
+    window.captureAllAnswersData = function() {
+        const sectionValue = document.getElementById('stuSection')?.value.trim() || '';
+        console.log('📸 CAPTURE - Section:', sectionValue);
+        
+        // Call original
+        const result = originalCapture ? originalCapture.apply(this, arguments) : {};
+        
+        // FORCE the section value
+        if (result && result.student) {
+            result.student.sec = sectionValue;
+        }
+        
+        return result;
+    };
+    
+    console.log('✅ NUCLEAR FIX APPLIED - Section will be sent');
+})();
+</script>
 </body>
 </html>
 
