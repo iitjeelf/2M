@@ -1465,8 +1465,8 @@ body.anti-sleep-active {
     <h1>LFJC ONLINE EXAMINATION</h1>
    <p style="font-size: 1.2em; margin: 10px 0; font-weight: bold;" id="totalQuestionsDisplay">TOTAL QUESTIONS</p>
     <div id="subjectBreakdownDisplay"></div>
-    <p style="margin: 10px 0; font-weight: bold;">CORRECT ANSWER + 1 MARKS</p>
-    <p style="margin: 5px 0; font-weight: bold;">WRONG ANSWER 0 MARK</p>
+    <p style="margin: 10px 0; font-weight: bold;">CORRECT ANSWER + 4 MARKS</p>
+    <p style="margin: 5px 0; font-weight: bold;">WRONG ANSWER -1 MARK</p>
     <input type="password" id="accessCode" class="access-code-input" placeholder="Enter Access Code">
     <button id="verifyAccess" class="verify-btn">VERIFY ACCESS</button>
     <div id="accessError" class="access-error">❌ Invalid access code. Please try again.</div>
@@ -1484,7 +1484,7 @@ body.anti-sleep-active {
   <div class="form-group"><label>ROLL NUMBER</label><input type="text" id="stuRoll" placeholder="Digits only" autocomplete="off"></div>
   <div class="form-group"><label>ADMISSION NUMBER</label><input type="text" id="stuAdm" placeholder="Digits only" autocomplete="off"></div>
 
-
+  <!-- REMOVED: Form Assignment Display -->
   
   <!-- RESUME EXAM SECTION -->
   <div id="resumeExamSection">
@@ -1643,16 +1643,16 @@ body.anti-sleep-active {
 const EXAM_SETUP = {
     // List your subjects: name, total questions, how many are numerical
     subjects: [
-        
-         { name: "Physics", questions: 5, numerical: 0 },    // 5 MCQ, 0 Numerical
-      { name: "Maths-B", questions: 10, numerical: 5 },    // 5 MCQ, 5 Numerical     
+        { name: "Botany", questions: 5, numerical: 0 },      // 5 MCQ, 0 Numerical
+         { name: "ZOOLOGY", questions: 5, numerical: 0 },    // 5 MCQ, 0 Numerical
+      { name: "maths", questions: 10, numerical: 0 },    // 5 MCQ, 0 Numerical     
     ],
     
     // Total time in minutes
-    duration: 120,
+    duration: 20,
     
     // Which subjects to send to Google Forms (use exact names from above)
-    activeForForms: ["Physics","Maths-B"]
+    activeForForms: ["BOTANY", "ZOOLOGY","MATHS"]
 };
 //Maths-A 
 // Maths-B
@@ -4150,18 +4150,10 @@ function startTimer() {
 
 // ===== GOOGLE FORMS SUBMISSION FUNCTIONS =====
 function captureAllAnswersData() {
-    // Get values DIRECTLY from inputs
-    const sectionValue = document.getElementById('stuSection').value;
-    
-    console.log('📸 CAPTURING - Raw section:', sectionValue);
+    console.log(`🎯 Capturing all student answers for ${TOTAL_QUESTIONS} questions...`);
     
     const answersData = {
-        student: {
-            name: document.getElementById('stuName').value,
-            sec: sectionValue,  // RAW value, no modification
-            roll: document.getElementById('stuRoll').value,
-            adm: document.getElementById('stuAdm').value
-        },
+        student: progress.student,
         timestamp: new Date().toISOString(),
         examId: generateExamId(),
         assignedForm: assignedForm,
@@ -4170,7 +4162,6 @@ function captureAllAnswersData() {
         structure: QUESTION_STRUCTURE
     };
     
-    // ... rest of your answers code stays the same
     for (let i = 0; i < examData.files.length; i++) {
         const originalIndex = examData.originalOrder[i];
         const questionType = examData.questionTypes[i];
@@ -4184,23 +4175,29 @@ function captureAllAnswersData() {
             isCorrect: progress.answers[i] === examData.keys[i],
             isReviewed: progress.review[i]
         };
+        
         answersData.answers.push(answerRecord);
     }
     
     answersData.answers.sort((a, b) => a.questionNumber - b.questionNumber);
     
-    // Calculate subject summary
     const subjectSummary = {};
     answersData.answers.forEach(answer => {
         const subject = answer.subject;
         if (!subjectSummary[subject]) {
             subjectSummary[subject] = {
-                total: 0, correct: 0, wrong: 0, notAttempted: 0, marks: 0,
+                total: 0,
+                correct: 0,
+                wrong: 0,
+                notAttempted: 0,
+                marks: 0,
                 mcq: { total: 0, correct: 0 },
                 fillBlank: { total: 0, correct: 0 }
             };
         }
+        
         subjectSummary[subject].total++;
+        
         if (answer.questionType === 'mcq') {
             subjectSummary[subject].mcq.total++;
             if (answer.isCorrect) subjectSummary[subject].mcq.correct++;
@@ -4208,6 +4205,7 @@ function captureAllAnswersData() {
             subjectSummary[subject].fillBlank.total++;
             if (answer.isCorrect) subjectSummary[subject].fillBlank.correct++;
         }
+        
         if (answer.isCorrect) {
             subjectSummary[subject].correct++;
             subjectSummary[subject].marks += MARK_PER_CORRECT;
@@ -4221,64 +4219,16 @@ function captureAllAnswersData() {
     
     answersData.summary = subjectSummary;
     
-    console.log('✅ Final student data:', answersData.student);
-    
-    return answersData;
-}
-    // Capture all 75 answers in original order
-    for (let i = 0; i < examData.files.length; i++) {
-        const originalIndex = examData.originalOrder[i];
-        const questionType = examData.questionTypes[i];
-        const answerRecord = {
-            questionNumber: originalIndex + 1,
-            shuffledPosition: i + 1,
-            subject: examData.subjectNames[i],
-            questionType: questionType,
-            studentAnswer: progress.answers[i] || 'N',
-            correctAnswer: examData.keys[i],
-            isCorrect: progress.answers[i] === examData.keys[i],
-            isReviewed: progress.review[i]
-        };
-        answersData.answers.push(answerRecord);
-    }
-    
-    answersData.answers.sort((a, b) => a.questionNumber - b.questionNumber);
-    
-    const subjectSummary = {};
-    answersData.answers.forEach(answer => {
-        const subject = answer.subject;
-        if (!subjectSummary[subject]) {
-            subjectSummary[subject] = {
-                total: 0, correct: 0, wrong: 0, notAttempted: 0, marks: 0,
-                mcq: { total: 0, correct: 0 },
-                fillBlank: { total: 0, correct: 0 }
-            };
-        }
-        subjectSummary[subject].total++;
-        if (answer.questionType === 'mcq') {
-            subjectSummary[subject].mcq.total++;
-            if (answer.isCorrect) subjectSummary[subject].mcq.correct++;
-        } else {
-            subjectSummary[subject].fillBlank.total++;
-            if (answer.isCorrect) subjectSummary[subject].fillBlank.correct++;
-        }
-        if (answer.isCorrect) {
-            subjectSummary[subject].correct++;
-            subjectSummary[subject].marks += MARK_PER_CORRECT;
-        } else if (answer.studentAnswer === 'N') {
-            subjectSummary[subject].notAttempted++;
-        } else {
-            subjectSummary[subject].wrong++;
-            subjectSummary[subject].marks += MARK_PER_WRONG;
-        }
+    console.log("📊 Answers Data Captured:", {
+        totalQuestions: answersData.answers.length,
+        answered: answersData.answers.filter(a => a.studentAnswer !== 'N').length,
+        correct: answersData.answers.filter(a => a.isCorrect).length,
+        assignedForm: assignedForm
     });
     
-    answersData.summary = subjectSummary;
-    
-    console.log("✅ Final student data:", answersData.student);
-    
     return answersData;
 }
+
 // ===== Format answers as string for Google Forms =====
 function formatAllAnswersString(answers) {
     console.log(`🎯 Formatting ${TOTAL_QUESTIONS} answers...`);
@@ -4334,7 +4284,6 @@ function calculateSubjectMarks(summary) {
 }
 
 // ===== UNIVERSAL SUBMISSION FUNCTION =====
-// ===== COMPLETELY REWRITTEN SUBMISSION FUNCTION =====
 async function submitToGoogleForms(answersData) {
     const FORM_URL = GOOGLE_FORMS[assignedForm];
     
@@ -4345,79 +4294,70 @@ async function submitToGoogleForms(answersData) {
     }
 
     try {
-        // Get values DIRECTLY from input fields - THIS IS THE KEY FIX
-        const nameValue = document.getElementById('stuName').value.trim();
-        const sectionValue = document.getElementById('stuSection').value.trim();
-        const rollValue = document.getElementById('stuRoll').value.trim();
-        const admValue = document.getElementById('stuAdm').value.trim();
-        
-        console.log('📤 SUBMITTING:');
-        console.log('Name:', nameValue);
-        console.log('Section:', sectionValue); // This will show "1D"
-        console.log('Roll:', rollValue);
-        console.log('Adm:', admValue);
-        
         const marks = calculateSubjectMarks(answersData.summary);
         const formData = new URLSearchParams();
         
-        // Use DIRECT values from inputs, NOT from answersData
-        formData.append(FORM_FIELDS.STUDENT_NAME, nameValue);
-        formData.append(FORM_FIELDS.SECTION, sectionValue); // USING DIRECT INPUT VALUE
-        formData.append(FORM_FIELDS.ROLL_NUMBER, rollValue);
-        formData.append(FORM_FIELDS.ADMISSION_NUMBER, admValue);
+        // Student information (ALWAYS sent)
+        formData.append(FORM_FIELDS.STUDENT_NAME, answersData.student.name);
+        formData.append(FORM_FIELDS.SECTION, answersData.student.sec);
+        formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
+        formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
         
-        // Send active subjects
+        // ===== SEND ONLY ACTIVE SUBJECTS =====
         for (let subject of ACTIVE_EXAM_SUBJECTS) {
-            const cleanSubject = subject
-                .trim()
-                .toUpperCase()
-                .replace(/\s+/g, '_')
-                .replace(/-/g, '_');
-            
-            let marksValue = "0.00";
-            
-            if (marks[cleanSubject]) {
-                marksValue = marks[cleanSubject].toFixed(2);
-            } else if (marks[subject]) {
-                marksValue = marks[subject].toFixed(2);
-            } else if (marks[subject.toUpperCase()]) {
-                marksValue = marks[subject.toUpperCase()].toFixed(2);
-            } else if (currentSubjData) {
-                for (let key in currentSubjData) {
-                    if (key.toUpperCase().replace(/[-\s]/g, '_') === cleanSubject) {
-                        marksValue = currentSubjData[key].marks.toFixed(2);
-                        break;
-                    }
-                }
-            }
-            
-            let fieldKey = null;
-            if (FORM_FIELDS[cleanSubject]) {
-                fieldKey = cleanSubject;
-            } else if (FORM_FIELDS[subject]) {
-                fieldKey = subject;
-            } else if (FORM_FIELDS[subject.toUpperCase()]) {
-                fieldKey = subject.toUpperCase();
-            } else {
-                for (let key in FORM_FIELDS) {
-                    if (key.replace(/_/g, '').toUpperCase() === cleanSubject.replace(/_/g, '')) {
-                        fieldKey = key;
-                        break;
-                    }
-                }
-            }
-            
-            if (fieldKey && FORM_FIELDS[fieldKey]) {
-                formData.append(FORM_FIELDS[fieldKey], marksValue);
+            switch(subject) {
+                case "PHYSICS":
+                    formData.append(FORM_FIELDS.PHYSICS, marks.physics?.toFixed(2) || "0.00");
+                    console.log("✓ Physics sent:", marks.physics?.toFixed(2) || "0.00");
+                    break;
+                    
+                case "CHEMISTRY":
+                    formData.append(FORM_FIELDS.CHEMISTRY, marks.chemistry?.toFixed(2) || "0.00");
+                    console.log("✓ Chemistry sent:", marks.chemistry?.toFixed(2) || "0.00");
+                    break;
+                    
+                case "MATHS":
+                    formData.append(FORM_FIELDS.MATHS, marks.maths?.toFixed(2) || "0.00");
+                    console.log("✓ Maths sent:", marks.maths?.toFixed(2) || "0.00");
+                    break;
+                    
+                case "MATHS_A":
+                    formData.append(FORM_FIELDS.MATHS_A, marks.maths?.toFixed(2) || "0.00");
+                    console.log("✓ Maths-A sent:", marks.maths?.toFixed(2) || "0.00");
+                    break;
+                    
+                case "MATHS_B":
+                    formData.append(FORM_FIELDS.MATHS_B, marks.maths?.toFixed(2) || "0.00");
+                    console.log("✓ Maths-B sent:", marks.maths?.toFixed(2) || "0.00");
+                    break;
+                    
+                case "BOTANY":
+                    formData.append(FORM_FIELDS.BOTANY, "0.00");
+                    console.log("✓ Botany sent: 0.00");
+                    break;
+                    
+                case "ZOOLOGY":
+                    formData.append(FORM_FIELDS.ZOOLOGY, "0.00");
+                    console.log("✓ Zoology sent: 0.00");
+                    break;
+                    
+                case "BZ":
+                    formData.append(FORM_FIELDS.BZ, "0.00");
+                    console.log("✓ BZ sent: 0.00");
+                    break;
             }
         }
         
+        // ALWAYS send these
         formData.append(FORM_FIELDS.TOTAL_MARKS, marks.total.toFixed(2));
         
+        // Format all answers as comma-separated string
         const allAnswersString = formatAllAnswersString(progress.answers);
         formData.append(FORM_FIELDS.ALL_ANSWERS, allAnswersString);
         
-        console.log('✅ Final section value being sent:', sectionValue);
+        console.log("✅ Final submission with subjects:", ACTIVE_EXAM_SUBJECTS.join(", "));
+        console.log("📤 Total marks:", marks.total.toFixed(2));
+        console.log("📤 Answers string length:", allAnswersString.length);
         
         await fetch(FORM_URL, {
             method: "POST",
@@ -4425,12 +4365,11 @@ async function submitToGoogleForms(answersData) {
             body: formData
         });
         
-        console.log("✅ Google Forms submission completed with section:", sectionValue);
+        console.log("✅ Google Forms submission completed");
         showToast('✅ Exam submitted successfully!', 'success', 5000);
         
         clearSavedExam();
         return true;
-        
     } catch (error) {
         console.error("❌ Submission error:", error);
         saveSubmissionLocally(answersData);
@@ -4438,6 +4377,7 @@ async function submitToGoogleForms(answersData) {
         return false;
     }
 }
+
 function saveSubmissionLocally(answersData) {
     try {
         const localSubmissions = JSON.parse(localStorage.getItem('local_exam_submissions') || '[]');
@@ -4529,15 +4469,12 @@ function submitExam() {
   
   const subjData = {};
   examData.subjectNames.forEach((s, i) => {
-    const subjectName = s;  // Use exact name, don't modify
-    
-    if (!subjData[subjectName]) {
-      subjData[subjectName] = {
-        correct: 0, wrong: 0, blank: 0, total: 0, marks: 0,
-        mcq: { total: 0, correct: 0 },
-        fillBlank: { total: 0, correct: 0 }
-      };
-    }
+    const subjectName = identifySubject(s);
+    if (!subjData[subjectName]) subjData[subjectName] = {
+      correct: 0, wrong: 0, blank: 0, total: 0, marks: 0,
+      mcq: { total: 0, correct: 0 },
+      fillBlank: { total: 0, correct: 0 }
+    };
     
     const ans = progress.answers[i];
     const questionType = examData.questionTypes[i];
@@ -4591,6 +4528,13 @@ function submitExam() {
   });
 
   showSummaryInterface(subjData);
+}
+
+function identifySubject(subjectName) {
+  if (subjectName.includes('Math')) return 'Mathematics';
+  if (subjectName.includes('Phy')) return 'Physics';
+  if (subjectName.includes('Chem')) return 'Chemistry';
+  return subjectName;
 }
 
 // ===== SUMMARY INTERFACE =====
@@ -4925,293 +4869,5 @@ console.log("📁 Loading answer key from: " + ANSWER_KEY_URL);
 console.log(`📁 Expecting ${TOTAL_QUESTIONS} answers`);
 console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "));
 </script> 
-<!-- ===== SIMPLE FIX: Force section values to work ===== -->
-<script>
-(function() {
-    console.log('🔧 Applying section field fix...');
-    
-    // Get the section input
-    const sectionInput = document.getElementById('stuSection');
-    
-    // Override the validation function completely
-    window.validateStudentInputs = function() {
-        const name = document.getElementById('stuName').value.trim();
-        const section = sectionInput.value.trim();
-        const roll = document.getElementById('stuRoll').value.trim();
-        const adm = document.getElementById('stuAdm').value.trim();
-        
-        // Clear previous errors
-        document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
-        
-        // Simple validation
-        let isValid = true;
-        
-        if (!name) {
-            document.getElementById('stuName').classList.add('error');
-            showError('Name is required');
-            isValid = false;
-        }
-        
-        // SECTION - ACCEPT ANYTHING
-        if (!section) {
-            document.getElementById('stuSection').classList.add('error');
-            showError('Section is required');
-            isValid = false;
-        }
-        
-        if (!roll || !/^\d+$/.test(roll)) {
-            document.getElementById('stuRoll').classList.add('error');
-            showError('Roll number must contain only digits');
-            isValid = false;
-        }
-        
-        if (!adm || !/^\d+$/.test(adm)) {
-            document.getElementById('stuAdm').classList.add('error');
-            showError('Admission number must contain only digits');
-            isValid = false;
-        }
-        
-        if (!keyLoaded) {
-            showError('Answer key not loaded');
-            isValid = false;
-        }
-        
-        // Show/hide start button
-        const startBtn = document.getElementById('stuStartBtn');
-        startBtn.style.display = isValid ? 'inline-block' : 'none';
-        
-        return isValid;
-    };
-    
-    // Force update on input
-    sectionInput.addEventListener('input', function() {
-        document.getElementById('stuStartBtn').style.display = 'inline-block';
-    });
-    
-    console.log('✅ Fix applied - Section field now accepts "1D", "2A", etc.');
-})();
-</script>
-<!-- ===== ULTIMATE FIX - BYPASS EVERYTHING ===== -->
-<script>
-(function() {
-    console.log('🚨 APPLYING ULTIMATE FIX FOR SECTION FIELD');
-    
-    // Wait for page to fully load
-    window.addEventListener('load', function() {
-        
-        // Get all elements
-        const nameInput = document.getElementById('stuName');
-        const sectionInput = document.getElementById('stuSection');
-        const rollInput = document.getElementById('stuRoll');
-        const admInput = document.getElementById('stuAdm');
-        const startBtn = document.getElementById('stuStartBtn');
-        
-        if (!sectionInput) {
-            console.error('Section input not found!');
-            return;
-        }
-        
-        console.log('✅ Section input found:', sectionInput);
-        
-        // 1. Remove ALL existing event listeners by cloning and replacing
-        const newSectionInput = sectionInput.cloneNode(true);
-        sectionInput.parentNode.replaceChild(newSectionInput, sectionInput);
-        
-        // 2. Get the new reference
-        const fixedSectionInput = document.getElementById('stuSection');
-        
-        // 3. Set a test value immediately
-        fixedSectionInput.value = 'TEST';
-        
-        // 4. Add a simple input handler
-        fixedSectionInput.addEventListener('input', function(e) {
-            console.log('Section input changed to:', this.value);
-            // Always show start button when section has value
-            if (this.value.trim() !== '' && 
-                nameInput.value.trim() !== '' && 
-                rollInput.value.trim() !== '' && 
-                admInput.value.trim() !== '') {
-                startBtn.style.display = 'inline-block';
-            }
-        });
-        
-        // 5. COMPLETELY REPLACE the validateStudentInputs function
-        window.validateStudentInputs = function() {
-            console.log('Custom validation running...');
-            
-            const name = nameInput.value.trim();
-            const section = fixedSectionInput.value.trim();
-            const roll = rollInput.value.trim();
-            const adm = admInput.value.trim();
-            
-            // Clear previous errors
-            document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
-            
-            // Simple validation
-            let isValid = true;
-            
-            if (!name) {
-                nameInput.classList.add('error');
-                showError('Name is required');
-                isValid = false;
-            } else if (!/^[A-Za-z .]+$/.test(name)) {
-                nameInput.classList.add('error');
-                showError('Name must contain only letters and spaces');
-                isValid = false;
-            }
-            
-            // SECTION - ABSOLUTELY ANYTHING IS ACCEPTED
-            if (!section) {
-                fixedSectionInput.classList.add('error');
-                showError('Section is required');
-                isValid = false;
-            } else {
-                // Optional: convert to uppercase
-                fixedSectionInput.value = section.toUpperCase();
-            }
-            
-            if (!roll) {
-                rollInput.classList.add('error');
-                showError('Roll number is required');
-                isValid = false;
-            } else if (!/^\d+$/.test(roll)) {
-                rollInput.classList.add('error');
-                showError('Roll number must contain only digits');
-                isValid = false;
-            }
-            
-            if (!adm) {
-                admInput.classList.add('error');
-                showError('Admission number is required');
-                isValid = false;
-            } else if (!/^\d+$/.test(adm)) {
-                admInput.classList.add('error');
-                showError('Admission number must contain only digits');
-                isValid = false;
-            }
-            
-            if (!keyLoaded) {
-                showError('Answer key not loaded');
-                isValid = false;
-            }
-            
-            // Show/hide start button
-            startBtn.style.display = isValid ? 'inline-block' : 'none';
-            
-            console.log('Validation result:', isValid, 'Section:', section);
-            
-            return isValid;
-        };
-        
-        // 6. Override the start button click handler
-        startBtn.onclick = function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            console.log('Start button clicked');
-            console.log('Section value:', fixedSectionInput.value);
-            
-            if (window.validateStudentInputs()) {
-                console.log('Validation passed, starting exam...');
-                // Store the section value in multiple places
-                window.lastSectionValue = fixedSectionInput.value;
-                
-                // Call the original start function
-                if (typeof showConfirm === 'function') {
-                    showConfirm("Start Exam?", function(ok) {
-                        if (ok && typeof startWithSecurity === 'function') {
-                            startWithSecurity(true);
-                        }
-                    });
-                }
-            }
-        };
-        
-        // 7. Force initial validation
-        setTimeout(function() {
-            if (fixedSectionInput.value) {
-                window.validateStudentInputs();
-            }
-        }, 500);
-        
-        console.log('✅ ULTIMATE FIX APPLIED - Section field now accepts ANY value');
-    });
-})();
-</script> 
-  <!-- ===== TEST SECTION FIELD ===== -->
-<script>
-// This will show you exactly what's being sent to Google Forms
-const originalSubmit = window.submitToGoogleForms;
-window.submitToGoogleForms = async function(answersData) {
-    console.log('🔍 SUBMISSION DATA:');
-    console.log('Student object:', answersData.student);
-    console.log('Section value being sent:', answersData.student.sec);
-    
-    // Get direct from input
-    const directSection = document.getElementById('stuSection').value;
-    console.log('Direct from input:', directSection);
-    
-    // If they don't match, force the correct value
-    if (answersData.student.sec !== directSection) {
-        console.log('⚠️ FIXING section value');
-        answersData.student.sec = directSection;
-    }
-    
-    // Call original function
-    return originalSubmit.apply(this, arguments);
-};
-
-console.log('✅ Test code added - check console on submission');
-</script>
-  <script>
-// ===== ABSOLUTE LAST RESORT - OVERRIDE EVERYTHING =====
-(function() {
-    console.log('💥 APPLYING NUCLEAR FIX');
-    
-    // Store the original submit function
-    const originalSubmitExam = window.submitExam;
-    
-    // COMPLETELY replace the submitExam function
-    window.submitExam = function() {
-        console.log('📤 NUCLEAR SUBMIT - Getting section value');
-        
-        // Get section value DIRECTLY from input
-        const sectionInput = document.getElementById('stuSection');
-        const sectionValue = sectionInput ? sectionInput.value.trim() : '';
-        
-        console.log('✅ SECTION VALUE:', sectionValue);
-        
-        // Store it in MULTIPLE places
-        if (progress && progress.student) {
-            progress.student.sec = sectionValue;
-        }
-        
-        // Call the original function
-        if (originalSubmitExam) {
-            return originalSubmitExam.apply(this, arguments);
-        }
-    };
-    
-    // Also override the capture function
-    const originalCapture = window.captureAllAnswersData;
-    window.captureAllAnswersData = function() {
-        const sectionValue = document.getElementById('stuSection')?.value.trim() || '';
-        console.log('📸 CAPTURE - Section:', sectionValue);
-        
-        // Call original
-        const result = originalCapture ? originalCapture.apply(this, arguments) : {};
-        
-        // FORCE the section value
-        if (result && result.student) {
-            result.student.sec = sectionValue;
-        }
-        
-        return result;
-    };
-    
-    console.log('✅ NUCLEAR FIX APPLIED - Section will be sent');
-})();
-</script>
 </body>
 </html>
-
