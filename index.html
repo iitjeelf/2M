@@ -4299,7 +4299,8 @@ async function submitToGoogleForms(answersData) {
         
         // Student information (ALWAYS sent)
         formData.append(FORM_FIELDS.STUDENT_NAME, answersData.student.name);
-        formData.append(FORM_FIELDS.SECTION, answersData.student.sec);
+        // Force section to be treated as TEXT (prevents Google Sheets from converting "1D" to date)
+        formData.append(FORM_FIELDS.SECTION, "'" + answersData.student.sec);
         formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
         formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
         
