@@ -4284,6 +4284,7 @@ function calculateSubjectMarks(summary) {
 }
 
 // ===== UNIVERSAL SUBMISSION FUNCTION =====
+// ===== COMPLETELY REWRITTEN SUBMISSION FUNCTION =====
 async function submitToGoogleForms(answersData) {
     const FORM_URL = GOOGLE_FORMS[assignedForm];
     
@@ -4294,93 +4295,79 @@ async function submitToGoogleForms(answersData) {
     }
 
     try {
+        // Get values DIRECTLY from input fields - THIS IS THE KEY FIX
+        const nameValue = document.getElementById('stuName').value.trim();
+        const sectionValue = document.getElementById('stuSection').value.trim();
+        const rollValue = document.getElementById('stuRoll').value.trim();
+        const admValue = document.getElementById('stuAdm').value.trim();
+        
+        console.log('📤 SUBMITTING:');
+        console.log('Name:', nameValue);
+        console.log('Section:', sectionValue); // This will show "1D"
+        console.log('Roll:', rollValue);
+        console.log('Adm:', admValue);
+        
         const marks = calculateSubjectMarks(answersData.summary);
         const formData = new URLSearchParams();
         
-        // Student information (ALWAYS sent)
-        formData.append(FORM_FIELDS.STUDENT_NAME, answersData.student.name);
-        formData.append(FORM_FIELDS.SECTION, answersData.student.sec);
-        formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
-        formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
+        // Use DIRECT values from inputs, NOT from answersData
+        formData.append(FORM_FIELDS.STUDENT_NAME, nameValue);
+        formData.append(FORM_FIELDS.SECTION, sectionValue); // USING DIRECT INPUT VALUE
+        formData.append(FORM_FIELDS.ROLL_NUMBER, rollValue);
+        formData.append(FORM_FIELDS.ADMISSION_NUMBER, admValue);
         
-       // ===== SEND ONLY ACTIVE SUBJECTS =====
-// ===== SEND ONLY ACTIVE SUBJECTS (AUTOMATED) =====
-for (let subject of ACTIVE_EXAM_SUBJECTS) {
-    // Clean the subject name to match FORM_FIELDS format
-    const cleanSubject = subject
-        .trim()                    // Remove spaces
-        .toUpperCase()              // Convert to uppercase
-        .replace(/\s+/g, '_')       // Replace spaces with underscores
-        .replace(/-/g, '_');        // Replace hyphens with underscores
-    
-    // Try multiple possible formats
-    let marksValue = "0.00";
-    
-    // Try 1: Direct match with cleaned subject
-    if (marks[cleanSubject]) {
-        marksValue = marks[cleanSubject].toFixed(2);
-    }
-    // Try 2: Try original subject
-    else if (marks[subject]) {
-        marksValue = marks[subject].toFixed(2);
-    }
-    // Try 3: Try uppercase
-    else if (marks[subject.toUpperCase()]) {
-        marksValue = marks[subject.toUpperCase()].toFixed(2);
-    }
-    // Try 4: Look in currentSubjData
-    else if (currentSubjData) {
-        for (let key in currentSubjData) {
-            if (key.toUpperCase().replace(/[-\s]/g, '_') === cleanSubject) {
-                marksValue = currentSubjData[key].marks.toFixed(2);
-                break;
+        // Send active subjects
+        for (let subject of ACTIVE_EXAM_SUBJECTS) {
+            const cleanSubject = subject
+                .trim()
+                .toUpperCase()
+                .replace(/\s+/g, '_')
+                .replace(/-/g, '_');
+            
+            let marksValue = "0.00";
+            
+            if (marks[cleanSubject]) {
+                marksValue = marks[cleanSubject].toFixed(2);
+            } else if (marks[subject]) {
+                marksValue = marks[subject].toFixed(2);
+            } else if (marks[subject.toUpperCase()]) {
+                marksValue = marks[subject.toUpperCase()].toFixed(2);
+            } else if (currentSubjData) {
+                for (let key in currentSubjData) {
+                    if (key.toUpperCase().replace(/[-\s]/g, '_') === cleanSubject) {
+                        marksValue = currentSubjData[key].marks.toFixed(2);
+                        break;
+                    }
+                }
+            }
+            
+            let fieldKey = null;
+            if (FORM_FIELDS[cleanSubject]) {
+                fieldKey = cleanSubject;
+            } else if (FORM_FIELDS[subject]) {
+                fieldKey = subject;
+            } else if (FORM_FIELDS[subject.toUpperCase()]) {
+                fieldKey = subject.toUpperCase();
+            } else {
+                for (let key in FORM_FIELDS) {
+                    if (key.replace(/_/g, '').toUpperCase() === cleanSubject.replace(/_/g, '')) {
+                        fieldKey = key;
+                        break;
+                    }
+                }
+            }
+            
+            if (fieldKey && FORM_FIELDS[fieldKey]) {
+                formData.append(FORM_FIELDS[fieldKey], marksValue);
             }
         }
-    }
-    
-    // Find matching FORM_FIELD
-    let fieldKey = null;
-    
-    // Try exact match
-    if (FORM_FIELDS[cleanSubject]) {
-        fieldKey = cleanSubject;
-    }
-    // Try with original
-    else if (FORM_FIELDS[subject]) {
-        fieldKey = subject;
-    }
-    // Try uppercase
-    else if (FORM_FIELDS[subject.toUpperCase()]) {
-        fieldKey = subject.toUpperCase();
-    }
-    // Search through all FORM_FIELDS keys
-    else {
-        for (let key in FORM_FIELDS) {
-            if (key.replace(/_/g, '').toUpperCase() === cleanSubject.replace(/_/g, '')) {
-                fieldKey = key;
-                break;
-            }
-        }
-    }
-    
-    // Send if field found
-    if (fieldKey && FORM_FIELDS[fieldKey]) {
-        formData.append(FORM_FIELDS[fieldKey], marksValue);
-        console.log(`✓ ${subject} → ${fieldKey} sent:`, marksValue);
-    } else {
-        console.log(`⚠️ No form field found for: ${subject}`);
-    }
-}
-        // ALWAYS send these
+        
         formData.append(FORM_FIELDS.TOTAL_MARKS, marks.total.toFixed(2));
         
-        // Format all answers as comma-separated string
         const allAnswersString = formatAllAnswersString(progress.answers);
         formData.append(FORM_FIELDS.ALL_ANSWERS, allAnswersString);
         
-        console.log("✅ Final submission with subjects:", ACTIVE_EXAM_SUBJECTS.join(", "));
-        console.log("📤 Total marks:", marks.total.toFixed(2));
-        console.log("📤 Answers string length:", allAnswersString.length);
+        console.log('✅ Final section value being sent:', sectionValue);
         
         await fetch(FORM_URL, {
             method: "POST",
@@ -4388,11 +4375,12 @@ for (let subject of ACTIVE_EXAM_SUBJECTS) {
             body: formData
         });
         
-        console.log("✅ Google Forms submission completed");
+        console.log("✅ Google Forms submission completed with section:", sectionValue);
         showToast('✅ Exam submitted successfully!', 'success', 5000);
         
         clearSavedExam();
         return true;
+        
     } catch (error) {
         console.error("❌ Submission error:", error);
         saveSubmissionLocally(answersData);
@@ -4400,7 +4388,6 @@ for (let subject of ACTIVE_EXAM_SUBJECTS) {
         return false;
     }
 }
-
 function saveSubmissionLocally(answersData) {
     try {
         const localSubmissions = JSON.parse(localStorage.getItem('local_exam_submissions') || '[]');
