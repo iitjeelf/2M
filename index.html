@@ -1465,8 +1465,8 @@ body.anti-sleep-active {
     <h1>LFJC ONLINE EXAMINATION</h1>
    <p style="font-size: 1.2em; margin: 10px 0; font-weight: bold;" id="totalQuestionsDisplay">TOTAL QUESTIONS</p>
     <div id="subjectBreakdownDisplay"></div>
-    <p style="margin: 10px 0; font-weight: bold;">CORRECT ANSWER + 4 MARKS</p>
-    <p style="margin: 5px 0; font-weight: bold;">WRONG ANSWER -1 MARK</p>
+    <p style="margin: 10px 0; font-weight: bold;">CORRECT ANSWER + 1 MARKS</p>
+    <p style="margin: 5px 0; font-weight: bold;">WRONG ANSWER 0 MARK</p>
     <input type="password" id="accessCode" class="access-code-input" placeholder="Enter Access Code">
     <button id="verifyAccess" class="verify-btn">VERIFY ACCESS</button>
     <div id="accessError" class="access-error">❌ Invalid access code. Please try again.</div>
@@ -1643,16 +1643,16 @@ body.anti-sleep-active {
 const EXAM_SETUP = {
     // List your subjects: name, total questions, how many are numerical
     subjects: [
-        { name: "Botany", questions: 5, numerical: 0 },      // 5 MCQ, 0 Numerical
+        
          { name: "ZOOLOGY", questions: 5, numerical: 0 },    // 5 MCQ, 0 Numerical
-      { name: "maths", questions: 10, numerical: 0 },    // 5 MCQ, 0 Numerical     
+      { name: "Maths-A ", questions: 10, numerical: 0 },    // 5 MCQ, 0 Numerical     
     ],
     
     // Total time in minutes
     duration: 20,
     
     // Which subjects to send to Google Forms (use exact names from above)
-    activeForForms: ["BOTANY", "ZOOLOGY","MATHS"]
+    activeForForms: ["ZOOLOGY","Maths-A "]
 };
 //Maths-A 
 // Maths-B
