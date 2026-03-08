@@ -4473,59 +4473,44 @@ async function submitToGoogleFormsWithRetry(answersData, maxRetries = 3) {
 }
 
 // ===== SUBMISSION FUNCTIONS =====
-function submitExam() {
-  if (hasSubmitted) return;
-  clearInterval(timerInterval);
-  
-  keepAwakeSystem.stop();
-  
-  if (autoSaveTimer) {
-    clearInterval(autoSaveTimer);
-    autoSaveTimer = null;
-  }
-  
-  hasSubmitted = true;
-  examInProgress = false;
-  
-  examSecurity.disable();
-  systemTrayDetector.disable();
-  
-  const subjData = {};
-  examData.subjectNames.forEach((s, i) => {
-    const subjectName = identifySubject(s);
-    if (!subjData[subjectName]) subjData[subjectName] = {
-      correct: 0, wrong: 0, blank: 0, total: 0, marks: 0,
-      mcq: { total: 0, correct: 0 },
-      fillBlank: { total: 0, correct: 0 }
-    };
+const subjData = {};
+examData.subjectNames.forEach((s, i) => {
+    const subjectName = s;  // Use exact name, don't modify
+    
+    if (!subjData[subjectName]) {
+        subjData[subjectName] = {
+            correct: 0, wrong: 0, blank: 0, total: 0, marks: 0,
+            mcq: { total: 0, correct: 0 },
+            fillBlank: { total: 0, correct: 0 }
+        };
+    }
     
     const ans = progress.answers[i];
     const questionType = examData.questionTypes[i];
     
     if (questionType === 'mcq') {
-      subjData[subjectName].mcq.total++;
+        subjData[subjectName].mcq.total++;
     } else {
-      subjData[subjectName].fillBlank.total++;
+        subjData[subjectName].fillBlank.total++;
     }
     
     if (ans === null) {
-      subjData[subjectName].blank++;
+        subjData[subjectName].blank++;
     } else if (ans === examData.keys[i]) {
-      subjData[subjectName].correct++;
-      subjData[subjectName].marks += MARK_PER_CORRECT;
-      
-      if (questionType === 'mcq') {
-        subjData[subjectName].mcq.correct++;
-      } else {
-        subjData[subjectName].fillBlank.correct++;
-      }
+        subjData[subjectName].correct++;
+        subjData[subjectName].marks += MARK_PER_CORRECT;
+        
+        if (questionType === 'mcq') {
+            subjData[subjectName].mcq.correct++;
+        } else {
+            subjData[subjectName].fillBlank.correct++;
+        }
     } else {
-      subjData[subjectName].wrong++;
-      subjData[subjectName].marks += MARK_PER_WRONG;
+        subjData[subjectName].wrong++;
+        subjData[subjectName].marks += MARK_PER_WRONG;
     }
     subjData[subjectName].total++;
-  });
-
+});
   currentSubjData = subjData;
   
   console.log("🎯 FINAL SUBMISSION DATA:");
@@ -4554,10 +4539,8 @@ function submitExam() {
 }
 
 function identifySubject(subjectName) {
-  if (subjectName.includes('Math')) return 'Mathematics';
-  if (subjectName.includes('Phy')) return 'Physics';
-  if (subjectName.includes('Chem')) return 'Chemistry';
-  return subjectName;
+    // Return the EXACT subject name as it appears in config
+    return subjectName;  // Just return the original name
 }
 
 // ===== SUMMARY INTERFACE =====
