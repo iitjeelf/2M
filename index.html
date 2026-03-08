@@ -5100,7 +5100,32 @@ console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "
         console.log('✅ ULTIMATE FIX APPLIED - Section field now accepts ANY value');
     });
 })();
-</script>  
+</script> 
+  <!-- ===== TEST SECTION FIELD ===== -->
+<script>
+// This will show you exactly what's being sent to Google Forms
+const originalSubmit = window.submitToGoogleForms;
+window.submitToGoogleForms = async function(answersData) {
+    console.log('🔍 SUBMISSION DATA:');
+    console.log('Student object:', answersData.student);
+    console.log('Section value being sent:', answersData.student.sec);
+    
+    // Get direct from input
+    const directSection = document.getElementById('stuSection').value;
+    console.log('Direct from input:', directSection);
+    
+    // If they don't match, force the correct value
+    if (answersData.student.sec !== directSection) {
+        console.log('⚠️ FIXING section value');
+        answersData.student.sec = directSection;
+    }
+    
+    // Call original function
+    return originalSubmit.apply(this, arguments);
+};
+
+console.log('✅ Test code added - check console on submission');
+</script>
 </body>
 </html>
 
