@@ -4304,18 +4304,73 @@ async function submitToGoogleForms(answersData) {
         formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
         
        // ===== SEND ONLY ACTIVE SUBJECTS =====
+// ===== SEND ONLY ACTIVE SUBJECTS (AUTOMATED) =====
 for (let subject of ACTIVE_EXAM_SUBJECTS) {
-    // Get marks for this subject
-    const subjectKey = subject.toLowerCase().replace('-', '_');
-    const marksValue = marks[subjectKey]?.toFixed(2) || "0.00";
+    // Clean the subject name to match FORM_FIELDS format
+    const cleanSubject = subject
+        .trim()                    // Remove spaces
+        .toUpperCase()              // Convert to uppercase
+        .replace(/\s+/g, '_')       // Replace spaces with underscores
+        .replace(/-/g, '_');        // Replace hyphens with underscores
     
-    // Direct mapping using your FORM_FIELDS
-    if (FORM_FIELDS[subject]) {
-        formData.append(FORM_FIELDS[subject], marksValue);
-        console.log(`✓ ${subject} sent:`, marksValue);
+    // Try multiple possible formats
+    let marksValue = "0.00";
+    
+    // Try 1: Direct match with cleaned subject
+    if (marks[cleanSubject]) {
+        marksValue = marks[cleanSubject].toFixed(2);
+    }
+    // Try 2: Try original subject
+    else if (marks[subject]) {
+        marksValue = marks[subject].toFixed(2);
+    }
+    // Try 3: Try uppercase
+    else if (marks[subject.toUpperCase()]) {
+        marksValue = marks[subject.toUpperCase()].toFixed(2);
+    }
+    // Try 4: Look in currentSubjData
+    else if (currentSubjData) {
+        for (let key in currentSubjData) {
+            if (key.toUpperCase().replace(/[-\s]/g, '_') === cleanSubject) {
+                marksValue = currentSubjData[key].marks.toFixed(2);
+                break;
+            }
+        }
+    }
+    
+    // Find matching FORM_FIELD
+    let fieldKey = null;
+    
+    // Try exact match
+    if (FORM_FIELDS[cleanSubject]) {
+        fieldKey = cleanSubject;
+    }
+    // Try with original
+    else if (FORM_FIELDS[subject]) {
+        fieldKey = subject;
+    }
+    // Try uppercase
+    else if (FORM_FIELDS[subject.toUpperCase()]) {
+        fieldKey = subject.toUpperCase();
+    }
+    // Search through all FORM_FIELDS keys
+    else {
+        for (let key in FORM_FIELDS) {
+            if (key.replace(/_/g, '').toUpperCase() === cleanSubject.replace(/_/g, '')) {
+                fieldKey = key;
+                break;
+            }
+        }
+    }
+    
+    // Send if field found
+    if (fieldKey && FORM_FIELDS[fieldKey]) {
+        formData.append(FORM_FIELDS[fieldKey], marksValue);
+        console.log(`✓ ${subject} → ${fieldKey} sent:`, marksValue);
+    } else {
+        console.log(`⚠️ No form field found for: ${subject}`);
     }
 }
-        
         // ALWAYS send these
         formData.append(FORM_FIELDS.TOTAL_MARKS, marks.total.toFixed(2));
         
