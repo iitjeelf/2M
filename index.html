@@ -4888,6 +4888,72 @@ console.log("📁 Loading answer key from: " + ANSWER_KEY_URL);
 console.log(`📁 Expecting ${TOTAL_QUESTIONS} answers`);
 console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "));
 </script> 
+<!-- ===== SIMPLE FIX: Force section values to work ===== -->
+<script>
+(function() {
+    console.log('🔧 Applying section field fix...');
+    
+    // Get the section input
+    const sectionInput = document.getElementById('stuSection');
+    
+    // Override the validation function completely
+    window.validateStudentInputs = function() {
+        const name = document.getElementById('stuName').value.trim();
+        const section = sectionInput.value.trim();
+        const roll = document.getElementById('stuRoll').value.trim();
+        const adm = document.getElementById('stuAdm').value.trim();
+        
+        // Clear previous errors
+        document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+        
+        // Simple validation
+        let isValid = true;
+        
+        if (!name) {
+            document.getElementById('stuName').classList.add('error');
+            showError('Name is required');
+            isValid = false;
+        }
+        
+        // SECTION - ACCEPT ANYTHING
+        if (!section) {
+            document.getElementById('stuSection').classList.add('error');
+            showError('Section is required');
+            isValid = false;
+        }
+        
+        if (!roll || !/^\d+$/.test(roll)) {
+            document.getElementById('stuRoll').classList.add('error');
+            showError('Roll number must contain only digits');
+            isValid = false;
+        }
+        
+        if (!adm || !/^\d+$/.test(adm)) {
+            document.getElementById('stuAdm').classList.add('error');
+            showError('Admission number must contain only digits');
+            isValid = false;
+        }
+        
+        if (!keyLoaded) {
+            showError('Answer key not loaded');
+            isValid = false;
+        }
+        
+        // Show/hide start button
+        const startBtn = document.getElementById('stuStartBtn');
+        startBtn.style.display = isValid ? 'inline-block' : 'none';
+        
+        return isValid;
+    };
+    
+    // Force update on input
+    sectionInput.addEventListener('input', function() {
+        document.getElementById('stuStartBtn').style.display = 'inline-block';
+    });
+    
+    console.log('✅ Fix applied - Section field now accepts "1D", "2A", etc.');
+})();
+</script>
 </body>
 </html>
 
