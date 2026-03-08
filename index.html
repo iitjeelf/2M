@@ -4954,6 +4954,153 @@ console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "
     console.log('✅ Fix applied - Section field now accepts "1D", "2A", etc.');
 })();
 </script>
+<!-- ===== ULTIMATE FIX - BYPASS EVERYTHING ===== -->
+<script>
+(function() {
+    console.log('🚨 APPLYING ULTIMATE FIX FOR SECTION FIELD');
+    
+    // Wait for page to fully load
+    window.addEventListener('load', function() {
+        
+        // Get all elements
+        const nameInput = document.getElementById('stuName');
+        const sectionInput = document.getElementById('stuSection');
+        const rollInput = document.getElementById('stuRoll');
+        const admInput = document.getElementById('stuAdm');
+        const startBtn = document.getElementById('stuStartBtn');
+        
+        if (!sectionInput) {
+            console.error('Section input not found!');
+            return;
+        }
+        
+        console.log('✅ Section input found:', sectionInput);
+        
+        // 1. Remove ALL existing event listeners by cloning and replacing
+        const newSectionInput = sectionInput.cloneNode(true);
+        sectionInput.parentNode.replaceChild(newSectionInput, sectionInput);
+        
+        // 2. Get the new reference
+        const fixedSectionInput = document.getElementById('stuSection');
+        
+        // 3. Set a test value immediately
+        fixedSectionInput.value = 'TEST';
+        
+        // 4. Add a simple input handler
+        fixedSectionInput.addEventListener('input', function(e) {
+            console.log('Section input changed to:', this.value);
+            // Always show start button when section has value
+            if (this.value.trim() !== '' && 
+                nameInput.value.trim() !== '' && 
+                rollInput.value.trim() !== '' && 
+                admInput.value.trim() !== '') {
+                startBtn.style.display = 'inline-block';
+            }
+        });
+        
+        // 5. COMPLETELY REPLACE the validateStudentInputs function
+        window.validateStudentInputs = function() {
+            console.log('Custom validation running...');
+            
+            const name = nameInput.value.trim();
+            const section = fixedSectionInput.value.trim();
+            const roll = rollInput.value.trim();
+            const adm = admInput.value.trim();
+            
+            // Clear previous errors
+            document.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+            
+            // Simple validation
+            let isValid = true;
+            
+            if (!name) {
+                nameInput.classList.add('error');
+                showError('Name is required');
+                isValid = false;
+            } else if (!/^[A-Za-z .]+$/.test(name)) {
+                nameInput.classList.add('error');
+                showError('Name must contain only letters and spaces');
+                isValid = false;
+            }
+            
+            // SECTION - ABSOLUTELY ANYTHING IS ACCEPTED
+            if (!section) {
+                fixedSectionInput.classList.add('error');
+                showError('Section is required');
+                isValid = false;
+            } else {
+                // Optional: convert to uppercase
+                fixedSectionInput.value = section.toUpperCase();
+            }
+            
+            if (!roll) {
+                rollInput.classList.add('error');
+                showError('Roll number is required');
+                isValid = false;
+            } else if (!/^\d+$/.test(roll)) {
+                rollInput.classList.add('error');
+                showError('Roll number must contain only digits');
+                isValid = false;
+            }
+            
+            if (!adm) {
+                admInput.classList.add('error');
+                showError('Admission number is required');
+                isValid = false;
+            } else if (!/^\d+$/.test(adm)) {
+                admInput.classList.add('error');
+                showError('Admission number must contain only digits');
+                isValid = false;
+            }
+            
+            if (!keyLoaded) {
+                showError('Answer key not loaded');
+                isValid = false;
+            }
+            
+            // Show/hide start button
+            startBtn.style.display = isValid ? 'inline-block' : 'none';
+            
+            console.log('Validation result:', isValid, 'Section:', section);
+            
+            return isValid;
+        };
+        
+        // 6. Override the start button click handler
+        startBtn.onclick = function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Start button clicked');
+            console.log('Section value:', fixedSectionInput.value);
+            
+            if (window.validateStudentInputs()) {
+                console.log('Validation passed, starting exam...');
+                // Store the section value in multiple places
+                window.lastSectionValue = fixedSectionInput.value;
+                
+                // Call the original start function
+                if (typeof showConfirm === 'function') {
+                    showConfirm("Start Exam?", function(ok) {
+                        if (ok && typeof startWithSecurity === 'function') {
+                            startWithSecurity(true);
+                        }
+                    });
+                }
+            }
+        };
+        
+        // 7. Force initial validation
+        setTimeout(function() {
+            if (fixedSectionInput.value) {
+                window.validateStudentInputs();
+            }
+        }, 500);
+        
+        console.log('✅ ULTIMATE FIX APPLIED - Section field now accepts ANY value');
+    });
+})();
+</script>  
 </body>
 </html>
 
