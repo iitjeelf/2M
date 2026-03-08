@@ -4950,5 +4950,103 @@ console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "
     console.log('✅ Section field fix applied');
 })();
 </script> 
+<!-- ===== SECTION FIELD FIX - ADD THIS RIGHT BEFORE </body> ===== -->
+<script>
+// ===== ULTIMATE FIX: Ensure section values like "1D" are sent correctly =====
+(function() {
+    console.log('🔧 APPLYING SECTION FIELD FIX - Values like "1D" will now work');
+    
+    // Store original functions
+    const originalSubmit = window.submitToGoogleForms;
+    
+    // Complete override of submit function
+    window.submitToGoogleForms = async function(answersData) {
+        const FORM_URL = GOOGLE_FORMS[assignedForm];
+        
+        if (!FORM_URL) {
+            console.error('❌ No Google Form URL found');
+            return false;
+        }
+
+        try {
+            // Get section value DIRECTLY from input field
+            const sectionInput = document.getElementById('stuSection');
+            const sectionValue = sectionInput ? sectionInput.value.trim() : '';
+            
+            console.log('✅ SECTION VALUE BEING SENT:', sectionValue);
+            
+            const marks = calculateSubjectMarks(answersData.summary);
+            const formData = new URLSearchParams();
+            
+            // Student information - USE DIRECT VALUES
+            formData.append(FORM_FIELDS.STUDENT_NAME, answersData.student.name);
+            formData.append(FORM_FIELDS.SECTION, sectionValue); // THIS IS THE KEY FIX
+            formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
+            formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
+            
+            // Send active subjects
+            for (let subject of ACTIVE_EXAM_SUBJECTS) {
+                let marksValue = "0.00";
+                
+                // Find marks for this subject
+                for (let key in currentSubjData) {
+                    if (key.toLowerCase().includes(subject.toLowerCase())) {
+                        marksValue = currentSubjData[key].marks.toFixed(2);
+                        break;
+                    }
+                }
+                
+                // Find the correct form field
+                let fieldKey = null;
+                for (let key in FORM_FIELDS) {
+                    if (key.replace(/_/g, '').toUpperCase() === subject.replace(/\s+/g, '').toUpperCase()) {
+                        fieldKey = key;
+                        break;
+                    }
+                }
+                
+                if (fieldKey && FORM_FIELDS[fieldKey]) {
+                    formData.append(FORM_FIELDS[fieldKey], marksValue);
+                }
+            }
+            
+            // Total marks and answers
+            formData.append(FORM_FIELDS.TOTAL_MARKS, marks.total.toFixed(2));
+            
+            const allAnswersString = formatAllAnswersString(progress.answers);
+            formData.append(FORM_FIELDS.ALL_ANSWERS, allAnswersString);
+            
+            console.log('📤 Submitting with section:', sectionValue);
+            
+            await fetch(FORM_URL, {
+                method: "POST",
+                mode: "no-cors",
+                body: formData
+            });
+            
+            console.log('✅ Submission successful');
+            showToast('✅ Exam submitted successfully!', 'success', 5000);
+            return true;
+            
+        } catch (error) {
+            console.error('❌ Submission error:', error);
+            return false;
+        }
+    };
+    
+    // Also fix the capture function
+    const originalCapture = window.captureAllAnswersData;
+    window.captureAllAnswersData = function() {
+        const result = originalCapture.apply(this, arguments);
+        const sectionInput = document.getElementById('stuSection');
+        if (sectionInput && result && result.student) {
+            result.student.sec = sectionInput.value.trim();
+        }
+        return result;
+    };
+    
+    console.log('✅ FIX APPLIED - Section field now accepts "1D", "2A", etc.');
+})();
+</script>
 </body>
 </html>
