@@ -1463,7 +1463,7 @@ body.anti-sleep-active {
 <!-- Access Denied Screen - ALWAYS SHOWS FIRST -->
 <div id="accessDenied" class="access-denied">
     <h1>LFJC ONLINE EXAMINATION</h1>
-    <p style="font-size: 1.2em; margin: 10px 0;" id="totalQuestionsDisplay">TOTAL QUESTIONS</p>
+   <p style="font-size: 1.2em; margin: 10px 0; font-weight: bold;" id="totalQuestionsDisplay">TOTAL QUESTIONS</p>
     <div id="subjectBreakdownDisplay"></div>
     <p style="margin: 10px 0; font-weight: bold;">CORRECT ANSWER + 4 MARKS</p>
     <p style="margin: 5px 0; font-weight: bold;">WRONG ANSWER -1 MARK</p>
@@ -1484,7 +1484,7 @@ body.anti-sleep-active {
   <div class="form-group"><label>ROLL NUMBER</label><input type="text" id="stuRoll" placeholder="Digits only" autocomplete="off"></div>
   <div class="form-group"><label>ADMISSION NUMBER</label><input type="text" id="stuAdm" placeholder="Digits only" autocomplete="off"></div>
 
-  <!-- REMOVED: Form Assignment Display -->
+
   
   <!-- RESUME EXAM SECTION -->
   <div id="resumeExamSection">
@@ -1605,7 +1605,7 @@ body.anti-sleep-active {
   </div>
 </div>
 
-<footer>© LFJC 2026 All Rights Reserved</footer>
+<footer>© LFJC 2026 | All Rights Reserved</footer>
 
 <!-- Security Overlays -->
 <div id="fullRedOverlay"></div>
@@ -1643,17 +1643,28 @@ body.anti-sleep-active {
 const EXAM_SETUP = {
     // List your subjects: name, total questions, how many are numerical
     subjects: [
-        { name: "Maths", questions: 15, numerical: 0 },      // 15 MCQ, 0 Numerical
-        { name: "Physics", questions: 20, numerical: 5 },    // 15 MCQ, 5 Numerical
-        { name: "Chemistry", questions: 20, numerical: 0 }   // 20 MCQ, 0 Numerical
+        { name: "Botany", questions: 5, numerical: 0 },      // 5 MCQ, 0 Numerical
+         { name: "ZOOLOGY", questions: 5, numerical: 0 },    // 5 MCQ, 0 Numerical
+      { name: "maths", questions: 10, numerical: 0 },    // 5 MCQ, 0 Numerical     
     ],
     
     // Total time in minutes
-    duration: 180,
+    duration: 20,
     
     // Which subjects to send to Google Forms (use exact names from above)
-    activeForForms: ["MATHS", "PHYSICS", "CHEMISTRY"]
+    activeForForms: ["BOTANY", "ZOOLOGY","MATHS"]
 };
+//Maths-A 
+// Maths-B
+// Maths  
+// Botany
+// zoology
+// BZ
+// Physics
+// Chemistry
+// A Marks
+// B Marks
+// C Marks  
 
 // ===== AUTO-CALCULATE EVERYTHING FROM YOUR CONFIG =====
 let currentStart = 1;
@@ -1693,23 +1704,21 @@ EXAM_SETUP.subjects.forEach(s => {
                 s.numerical > 0 ? `, Q${s.numericalStart}-${s.end} Numerical)` : "All MCQ)");
 });
 
-// Update the access denied screen
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('totalQuestionsDisplay').textContent = `TOTAL ${TOTAL_QUESTIONS} QUESTIONS`;
+    document.getElementById('totalQuestionsDisplay').innerHTML = `<strong>TOTAL ${TOTAL_QUESTIONS} QUESTIONS</strong>`;
     
     let breakdownHTML = '';
     EXAM_SETUP.subjects.forEach(s => {
         if (s.numerical > 0) {
-            breakdownHTML += `<p style="margin: 5px 0;">• ${s.name}: ${s.mcq} (MCQ), ${s.numerical} (Numerical Input)</p>`;
+            breakdownHTML += `<p style="margin: 5px 0;"><strong>• ${s.name}: ${s.mcq} (MCQ), ${s.numerical} (Numerical Input)</strong></p>`;
         } else {
-            breakdownHTML += `<p style="margin: 5px 0;">• ${s.name}: ${s.questions} (MCQ)</p>`;
+            breakdownHTML += `<p style="margin: 5px 0;"><strong>• ${s.name}: ${s.questions} (MCQ)</strong></p>`;
         }
     });
     document.getElementById('subjectBreakdownDisplay').innerHTML = breakdownHTML;
 });
-
 // ===== CONFIGURATION CONSTANTS (Auto-set from above) =====
-const MARK_PER_CORRECT = 4, MARK_PER_WRONG = -1;
+const MARK_PER_CORRECT = 1, MARK_PER_WRONG = 0;
 const STORAGE_KEY_PREFIX = "lfjc_exam_";
 const ACCESS_CODE = "lfjc2025";
 const ADMIN_PASSWORD = "admin2025";
@@ -1783,7 +1792,7 @@ const FORM_FIELDS = {
 // ===== MULTI-FORM GOOGLE FORMS INTEGRATION =====
 const GOOGLE_FORMS = {
     '1': "https://docs.google.com/forms/d/e/1FAIpQLSfDqJ96BQj-kHj6RwHW1Vb1jSUQ7x-2lxMbSEAtb1GNVGB6xA/formResponse",
-    '2': "https://docs.google.com/forms/d/e/1FAIpQLSfgUmoGNzqlP4shcdEIGmK6ftCxl-z-7NTQX0t1dJS6HBYNnw/formResponse",
+    '2': " https://docs.google.com/forms/d/e/1FAIpQLSfgUmoGNzqlP4shcdEIGmK6ftCxl-z-7NTQX0t1dJS6HBYnNw/formResponse",
     '3': "https://docs.google.com/forms/d/e/1FAIpQLSeFGU6ngws5V1Un--VElcO7ivRtXUcOLzdIvEUQNu7RrZvpLw/formResponse",
     '4': "https://docs.google.com/forms/d/e/1FAIpQLSdwMn5az6oBg6GZknUib_G-qHECxPb7bXg2yoqK_vjxGU4JQg/formResponse",
     '5': "https://docs.google.com/forms/d/e/1FAIpQLSeuej9VVaxkv5Ail7Pbk5yzS5HuOlen2bVz4L2rsdywWBIvmQ/formResponse",
@@ -1792,8 +1801,7 @@ const GOOGLE_FORMS = {
     '8': "https://docs.google.com/forms/d/e/1FAIpQLSd9Oj2FaCzpmqQesWmQL-5t1FKfUfzz5AaVTc-Dq-eDujUr3g/formResponse",
     '9': "https://docs.google.com/forms/d/e/1FAIpQLSdeUH8oatXXsB9NuQpsbRWfnGj0N5Cbh7SVe07tmcUW9WJj8A/formResponse",
     '10': "https://docs.google.com/forms/d/e/1FAIpQLSf3n6fMXa3mP_ij279XKLELfohGwuMfmWWc9fTfM3VgY2oWLg/formResponse"
-};
-
+}; 
 // ===== GLOBAL VARIABLES =====
 let images = [];
 let hasSubmitted = false;
@@ -4295,50 +4303,18 @@ async function submitToGoogleForms(answersData) {
         formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
         formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
         
-        // ===== SEND ONLY ACTIVE SUBJECTS =====
-        for (let subject of ACTIVE_EXAM_SUBJECTS) {
-            switch(subject) {
-                case "PHYSICS":
-                    formData.append(FORM_FIELDS.PHYSICS, marks.physics?.toFixed(2) || "0.00");
-                    console.log("✓ Physics sent:", marks.physics?.toFixed(2) || "0.00");
-                    break;
-                    
-                case "CHEMISTRY":
-                    formData.append(FORM_FIELDS.CHEMISTRY, marks.chemistry?.toFixed(2) || "0.00");
-                    console.log("✓ Chemistry sent:", marks.chemistry?.toFixed(2) || "0.00");
-                    break;
-                    
-                case "MATHS":
-                    formData.append(FORM_FIELDS.MATHS, marks.maths?.toFixed(2) || "0.00");
-                    console.log("✓ Maths sent:", marks.maths?.toFixed(2) || "0.00");
-                    break;
-                    
-                case "MATHS_A":
-                    formData.append(FORM_FIELDS.MATHS_A, marks.maths?.toFixed(2) || "0.00");
-                    console.log("✓ Maths-A sent:", marks.maths?.toFixed(2) || "0.00");
-                    break;
-                    
-                case "MATHS_B":
-                    formData.append(FORM_FIELDS.MATHS_B, marks.maths?.toFixed(2) || "0.00");
-                    console.log("✓ Maths-B sent:", marks.maths?.toFixed(2) || "0.00");
-                    break;
-                    
-                case "BOTANY":
-                    formData.append(FORM_FIELDS.BOTANY, "0.00");
-                    console.log("✓ Botany sent: 0.00");
-                    break;
-                    
-                case "ZOOLOGY":
-                    formData.append(FORM_FIELDS.ZOOLOGY, "0.00");
-                    console.log("✓ Zoology sent: 0.00");
-                    break;
-                    
-                case "BZ":
-                    formData.append(FORM_FIELDS.BZ, "0.00");
-                    console.log("✓ BZ sent: 0.00");
-                    break;
-            }
-        }
+       // ===== SEND ONLY ACTIVE SUBJECTS =====
+for (let subject of ACTIVE_EXAM_SUBJECTS) {
+    // Get marks for this subject
+    const subjectKey = subject.toLowerCase().replace('-', '_');
+    const marksValue = marks[subjectKey]?.toFixed(2) || "0.00";
+    
+    // Direct mapping using your FORM_FIELDS
+    if (FORM_FIELDS[subject]) {
+        formData.append(FORM_FIELDS[subject], marksValue);
+        console.log(`✓ ${subject} sent:`, marksValue);
+    }
+}
         
         // ALWAYS send these
         formData.append(FORM_FIELDS.TOTAL_MARKS, marks.total.toFixed(2));
