@@ -4150,10 +4150,23 @@ function startTimer() {
 
 // ===== GOOGLE FORMS SUBMISSION FUNCTIONS =====
 function captureAllAnswersData() {
-    console.log(`🎯 Capturing all student answers for ${TOTAL_QUESTIONS} questions...`);
+    console.log("🎯 Capturing all student answers for 75 questions...");
+    
+    // Get the CURRENT values directly from inputs
+    const currentName = document.getElementById('stuName')?.value.trim() || '';
+    const currentSection = document.getElementById('stuSection')?.value.trim() || '';
+    const currentRoll = document.getElementById('stuRoll')?.value.trim() || '';
+    const currentAdm = document.getElementById('stuAdm')?.value.trim() || '';
+    
+    console.log('📝 CAPTURING - Current section value:', currentSection);
     
     const answersData = {
-        student: progress.student,
+        student: {
+            name: currentName,
+            sec: currentSection,  // ← USING CURRENT VALUE, NOT progress.student.sec
+            roll: currentRoll,
+            adm: currentAdm
+        },
         timestamp: new Date().toISOString(),
         examId: generateExamId(),
         assignedForm: assignedForm,
@@ -4162,6 +4175,7 @@ function captureAllAnswersData() {
         structure: QUESTION_STRUCTURE
     };
     
+    // Capture all 75 answers in original order
     for (let i = 0; i < examData.files.length; i++) {
         const originalIndex = examData.originalOrder[i];
         const questionType = examData.questionTypes[i];
@@ -4175,7 +4189,6 @@ function captureAllAnswersData() {
             isCorrect: progress.answers[i] === examData.keys[i],
             isReviewed: progress.review[i]
         };
-        
         answersData.answers.push(answerRecord);
     }
     
@@ -4186,18 +4199,12 @@ function captureAllAnswersData() {
         const subject = answer.subject;
         if (!subjectSummary[subject]) {
             subjectSummary[subject] = {
-                total: 0,
-                correct: 0,
-                wrong: 0,
-                notAttempted: 0,
-                marks: 0,
+                total: 0, correct: 0, wrong: 0, notAttempted: 0, marks: 0,
                 mcq: { total: 0, correct: 0 },
                 fillBlank: { total: 0, correct: 0 }
             };
         }
-        
         subjectSummary[subject].total++;
-        
         if (answer.questionType === 'mcq') {
             subjectSummary[subject].mcq.total++;
             if (answer.isCorrect) subjectSummary[subject].mcq.correct++;
@@ -4205,7 +4212,6 @@ function captureAllAnswersData() {
             subjectSummary[subject].fillBlank.total++;
             if (answer.isCorrect) subjectSummary[subject].fillBlank.correct++;
         }
-        
         if (answer.isCorrect) {
             subjectSummary[subject].correct++;
             subjectSummary[subject].marks += MARK_PER_CORRECT;
@@ -4219,16 +4225,10 @@ function captureAllAnswersData() {
     
     answersData.summary = subjectSummary;
     
-    console.log("📊 Answers Data Captured:", {
-        totalQuestions: answersData.answers.length,
-        answered: answersData.answers.filter(a => a.studentAnswer !== 'N').length,
-        correct: answersData.answers.filter(a => a.isCorrect).length,
-        assignedForm: assignedForm
-    });
+    console.log("✅ Final student data:", answersData.student);
     
     return answersData;
 }
-
 // ===== Format answers as string for Google Forms =====
 function formatAllAnswersString(answers) {
     console.log(`🎯 Formatting ${TOTAL_QUESTIONS} answers...`);
