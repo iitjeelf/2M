@@ -4264,26 +4264,7 @@ function calculateSubjectMarks(summary) {
     marks.TOTAL = total;
     return marks;
 }
-    // Initialize all subjects from setup
-    EXAM_SETUP.subjects.forEach(subject => {
-        marks[subject.name.toLowerCase()] = 0;
-    });
     
-    // Calculate marks for each subject
-    for (let subject in summary) {
-        const subjectLower = subject.toLowerCase();
-        for (let setupSubject of EXAM_SETUP.subjects) {
-            if (subjectLower.includes(setupSubject.name.toLowerCase())) {
-                marks[setupSubject.name.toLowerCase()] = summary[subject].marks;
-                break;
-            }
-        }
-        total += summary[subject].marks;
-    }
-    
-    marks.total = total;
-    return marks;
-}
 
 // ===== UNIVERSAL SUBMISSION FUNCTION =====
 async function submitToGoogleForms(answersData) {
