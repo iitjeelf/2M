@@ -1643,15 +1643,15 @@ body.anti-sleep-active {
 const EXAM_SETUP = {
     // List your subjects: name, total questions, how many are numerical
     subjects: [
-      { name: "MATHS", questions: 5, numerical: 0 },    // 5 MCQ, 0 Numerical
-      { name: "ZOOLOGY", questions: 10, numerical: 0 }   // 10 MCQ, 0 Numerical
+      { name: "MATHS_A", questions: 5, numerical: 0 },    // 5 MCQ, 0 Numerical
+      { name: "MATHS_B", questions: 10, numerical: 5 }   //5 MCQ, 5 Numerical
     ],
     
     // Total time in minutes
     duration: 15,
     
     // Which subjects to send to Google Forms (use exact names from above)
-    activeForForms: ["MATHS", "ZOOLOGY"]
+    activeForForms: ["MATHS_A", "MATHS_B"]
   // MATHS_A	
  // MATHS_B	
  // MATHS	
@@ -1769,19 +1769,19 @@ const FORM_FIELDS = {
     ADMISSION_NUMBER: "entry.1234063852",
     
     // Subject Fields (as they appear in your form)
-    MATHS_A: "entry.1989859216",      // Maths-A
-    MATHS_B: "entry.751186481",       // Maths-B
-    MATHS: "entry.1773709116",         // Maths (main)
-    BOTANY: "entry.1228811999",        // Botany
-    ZOOLOGY: "entry.361390291",        // zoology
-    BZ: "entry.1382726950",            // BZ
-    PHYSICS: "entry.1953974928",       // Physics
-    CHEMISTRY: "entry.296331194",      // Chemistry
+    MATHS_A: "entry.1989859216",      // MATHS_A
+    MATHS_B: "entry.751186481",       // MATHS_B
+    MATHS: "entry.1773709116",        // MATHS
+    BOTANY: "entry.1228811999",       // BOTANY
+    ZOOLOGY: "entry.361390291",       // ZOOLOGY
+    BZ: "entry.1382726950",           // BZ
+    PHYSICS: "entry.1953974928",      // PHYSICS
+    CHEMISTRY: "entry.296331194",     // CHEMISTRY
     
     // Marks Fields
-    A_MARKS: "entry.1390068574",       // A Marks
-    B_MARKS: "entry.1587280094",       // B Marks
-    C_MARKS: "entry.1032663012",       // C Marks
+    A_MARKS: "entry.1390068574",       // A_MARKS
+    B_MARKS: "entry.1587280094",       // B_MARKS
+    C_MARKS: "entry.1032663012",       // C_MARKS
     
     // Total & Answers
     TOTAL_MARKS: "entry.1289040887",   // Total marks
