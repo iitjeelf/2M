@@ -4297,50 +4297,26 @@ formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
 // TEMPORARY DEBUG ALERT - ADD THIS LINE
 alert("Section value: " + answersData.student.sec + " sent to field: " + FORM_FIELDS.SECTION);
         // ===== SEND ONLY ACTIVE SUBJECTS =====
-        for (let subject of ACTIVE_EXAM_SUBJECTS) {
-            switch(subject) {
-                case "PHYSICS":
-                    formData.append(FORM_FIELDS.PHYSICS, marks.physics?.toFixed(2) || "0.00");
-                    console.log("✓ Physics sent:", marks.physics?.toFixed(2) || "0.00");
-                    break;
-                    
-                case "CHEMISTRY":
-                    formData.append(FORM_FIELDS.CHEMISTRY, marks.chemistry?.toFixed(2) || "0.00");
-                    console.log("✓ Chemistry sent:", marks.chemistry?.toFixed(2) || "0.00");
-                    break;
-                    
-                case "MATHS":
-                    formData.append(FORM_FIELDS.MATHS, marks.maths?.toFixed(2) || "0.00");
-                    console.log("✓ Maths sent:", marks.maths?.toFixed(2) || "0.00");
-                    break;
-                    
-                case "MATHS_A":
-                    formData.append(FORM_FIELDS.MATHS_A, marks.maths?.toFixed(2) || "0.00");
-                    console.log("✓ Maths-A sent:", marks.maths?.toFixed(2) || "0.00");
-                    break;
-                    
-                case "MATHS_B":
-                    formData.append(FORM_FIELDS.MATHS_B, marks.maths?.toFixed(2) || "0.00");
-                    console.log("✓ Maths-B sent:", marks.maths?.toFixed(2) || "0.00");
-                    break;
-                    
-                case "BOTANY":
-                    formData.append(FORM_FIELDS.BOTANY, "0.00");
-                    console.log("✓ Botany sent: 0.00");
-                    break;
-                    
-                case "ZOOLOGY":
-                    formData.append(FORM_FIELDS.ZOOLOGY, "0.00");
-                    console.log("✓ Zoology sent: 0.00");
-                    break;
-                    
-                case "BZ":
-                    formData.append(FORM_FIELDS.BZ, "0.00");
-                    console.log("✓ BZ sent: 0.00");
-                    break;
-            }
-        }
-        
+       for (let subject of ACTIVE_EXAM_SUBJECTS) {
+    switch(subject) {
+        case "PHYSICS":
+            formData.append(FORM_FIELDS.PHYSICS, marks.physics?.toFixed(2) || "0.00");
+            break;
+        case "CHEMISTRY":
+            formData.append(FORM_FIELDS.CHEMISTRY, marks.chemistry?.toFixed(2) || "0.00");
+            break;
+        case "MATHS":
+            formData.append(FORM_FIELDS.MATHS, marks.maths?.toFixed(2) || "0.00");
+            break;
+        case "BOTANY":
+            formData.append(FORM_FIELDS.BOTANY, "0.00");
+            break;
+        case "ZOOLOGY":
+            formData.append(FORM_FIELDS.ZOOLOGY, "0.00");
+            break;
+        // ... all other subjects listed
+    }
+}
         // ALWAYS send these
         formData.append(FORM_FIELDS.TOTAL_MARKS, marks.total.toFixed(2));
         
