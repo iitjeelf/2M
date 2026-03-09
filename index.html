@@ -1704,19 +1704,18 @@ EXAM_SETUP.subjects.forEach(s => {
 
 // Update the access denied screen
 document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('totalQuestionsDisplay').textContent = `TOTAL ${TOTAL_QUESTIONS} QUESTIONS`;
+    document.getElementById('totalQuestionsDisplay').innerHTML = `<strong>TOTAL ${TOTAL_QUESTIONS} QUESTIONS</strong>`;
     
     let breakdownHTML = '';
     EXAM_SETUP.subjects.forEach(s => {
         if (s.numerical > 0) {
-            breakdownHTML += `<p style="margin: 5px 0;">• ${s.name}: ${s.mcq} (MCQ), ${s.numerical} (Numerical Input)</p>`;
+            breakdownHTML += `<p style="margin: 5px 0;"><strong>• ${s.name}: ${s.mcq} (MCQ), ${s.numerical} (Numerical Input)</strong></p>`;
         } else {
-            breakdownHTML += `<p style="margin: 5px 0;">• ${s.name}: ${s.questions} (MCQ)</p>`;
+            breakdownHTML += `<p style="margin: 5px 0;"><strong>• ${s.name}: ${s.questions} (MCQ)</strong></p>`;
         }
     });
     document.getElementById('subjectBreakdownDisplay').innerHTML = breakdownHTML;
 });
-
 // ===== CONFIGURATION CONSTANTS (Auto-set from above) =====
 const MARK_PER_CORRECT = 1, MARK_PER_WRONG = 0;
 const STORAGE_KEY_PREFIX = "lfjc_exam_";
