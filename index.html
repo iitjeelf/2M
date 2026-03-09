@@ -4312,9 +4312,6 @@ const dateStr = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear().
 // Replace section with formatted value
 formData.set(FORM_FIELDS.SECTION, answersData.student.sec + " " + dateStr + " " + subjectCodes);
 
-// TEMPORARY DEBUG ALERT
-alert("Section value: " + answersData.student.sec + " " + dateStr + " " + subjectCodes + " sent to field: " + FORM_FIELDS.SECTION);
-
 // ===== SEND ONLY ACTIVE SUBJECTS =====
 for (let subject of ACTIVE_EXAM_SUBJECTS) {
     // Get the mark directly from marks object using the subject name
