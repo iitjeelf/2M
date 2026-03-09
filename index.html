@@ -4288,14 +4288,23 @@ async function submitToGoogleForms(answersData) {
         const marks = calculateSubjectMarks(answersData.summary);
         const formData = new URLSearchParams();
         
-     // Student information (ALWAYS sent)
-formData.append(FORM_FIELDS.STUDENT_NAME, answersData.student.name);
-// Get subjects from your exam setup
-const subjectList = EXAM_SETUP.subjects.map(s => s.name.substring(0,1)).join('');
+  // Format subject codes as requested
+const subjectCodes = ACTIVE_EXAM_SUBJECTS.map(s => {
+    if (s === "MATHS_A") return "MA";
+    if (s === "MATHS_B") return "MB";
+    if (s === "MATHS") return "M";
+    if (s === "PHYSICS") return "P";
+    if (s === "CHEMISTRY") return "C";
+    if (s === "BOTANY") return "B";
+    if (s === "ZOOLOGY") return "Z";
+    if (s === "BZ") return "BZ";
+    return s.substring(0,1); // fallback
+}).join(', ');
+
 const today = new Date();
 const dateStr = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear().toString().slice(-2)}`;
 
-formData.append(FORM_FIELDS.SECTION, answersData.student.sec + " " + dateStr + " " + subjectList);
+formData.append(FORM_FIELDS.SECTION, answersData.student.sec + " " + dateStr + " " + subjectCodes);
 formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
 formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
 
