@@ -4296,8 +4296,8 @@ formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
 
 // TEMPORARY DEBUG ALERT - ADD THIS LINE
 alert("Section value: " + answersData.student.sec + " sent to field: " + FORM_FIELDS.SECTION);
-        // ===== SEND ONLY ACTIVE SUBJECTS =====
-       for (let subject of ACTIVE_EXAM_SUBJECTS) {
+      // ===== SEND ONLY ACTIVE SUBJECTS =====
+for (let subject of ACTIVE_EXAM_SUBJECTS) {
     switch(subject) {
         case "PHYSICS":
             formData.append(FORM_FIELDS.PHYSICS, marks.physics?.toFixed(2) || "0.00");
@@ -4314,7 +4314,15 @@ alert("Section value: " + answersData.student.sec + " sent to field: " + FORM_FI
         case "ZOOLOGY":
             formData.append(FORM_FIELDS.ZOOLOGY, "0.00");
             break;
-        // ... all other subjects listed
+        case "BZ":
+            formData.append(FORM_FIELDS.BZ, "0.00");
+            break;
+        case "MATHS_A":
+            formData.append(FORM_FIELDS.MATHS_A, "0.00");
+            break;
+        case "MATHS_B":
+            formData.append(FORM_FIELDS.MATHS_B, "0.00");
+            break;
     }
 }
         // ALWAYS send these
