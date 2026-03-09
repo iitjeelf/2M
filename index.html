@@ -1643,7 +1643,7 @@ body.anti-sleep-active {
 const EXAM_SETUP = {
     // List your subjects: name, total questions, how many are numerical
     subjects: [
-      { name: "Maths-A", questions: 5, numerical: 0 },    // 5 MCQ, 0 Numerical
+      { name: "Physics", questions: 5, numerical: 0 },    // 5 MCQ, 0 Numerical
         { name: "Chemistry", questions: 10, numerical: 0 }   // 10 MCQ, 0 Numerical
     ],
     
@@ -1651,7 +1651,7 @@ const EXAM_SETUP = {
     duration: 120,
     
     // Which subjects to send to Google Forms (use exact names from above)
-    activeForForms: ["Maths-A", "CHEMISTRY"]
+    activeForForms: ["PHYSICS", "CHEMISTRY"]
 };
 
 // ===== AUTO-CALCULATE EVERYTHING FROM YOUR CONFIG =====
@@ -4253,15 +4253,24 @@ function calculateSubjectMarks(summary) {
     const marks = {};
     let total = 0;
     
-    // For each subject in the summary, use its EXACT name as the key
+    // Initialize all subjects from setup
+    EXAM_SETUP.subjects.forEach(subject => {
+        marks[subject.name.toLowerCase()] = 0;
+    });
+    
+    // Calculate marks for each subject
     for (let subject in summary) {
-        // Convert subject name to match FORM_FIELDS keys (uppercase, underscores)
-        const subjectKey = subject.toUpperCase().replace(/[-\s]/g, '_');
-        marks[subjectKey] = summary[subject].marks;
+        const subjectLower = subject.toLowerCase();
+        for (let setupSubject of EXAM_SETUP.subjects) {
+            if (subjectLower.includes(setupSubject.name.toLowerCase())) {
+                marks[setupSubject.name.toLowerCase()] = summary[subject].marks;
+                break;
+            }
+        }
         total += summary[subject].marks;
     }
     
-    marks.TOTAL = total;
+    marks.total = total;
     return marks;
 }
 
@@ -4279,63 +4288,41 @@ async function submitToGoogleForms(answersData) {
         const marks = calculateSubjectMarks(answersData.summary);
         const formData = new URLSearchParams();
         
- // Format subject codes as requested
-const subjectCodes = ACTIVE_EXAM_SUBJECTS.map(s => {
-    if (s === "MATHS_A") return "MA";
-    if (s === "MATHS_B") return "MB";
-    if (s === "MATHS") return "M";
-    if (s === "PHYSICS") return "P";
-    if (s === "CHEMISTRY") return "C";
-    if (s === "BOTANY") return "B";
-    if (s === "ZOOLOGY") return "Z";
-    if (s === "BZ") return "BZ";
-    return s.substring(0,1);
-}).join(', ');
-
-const today = new Date();
-const dateStr = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear().toString().slice(-2)}`;
-
-formData.append(FORM_FIELDS.SECTION, answersData.student.sec + " " + dateStr + " " + subjectCodes);
+     // Student information (ALWAYS sent)
+formData.append(FORM_FIELDS.STUDENT_NAME, answersData.student.name);
+formData.append(FORM_FIELDS.SECTION, answersData.student.sec);
 formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
 formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
 
 // TEMPORARY DEBUG ALERT - ADD THIS LINE
 alert("Section value: " + answersData.student.sec + " sent to field: " + FORM_FIELDS.SECTION);
-  // ===== SEND ONLY ACTIVE SUBJECTS =====
-// ===== SEND ONLY ACTIVE SUBJECTS =====
+      // ===== SEND ONLY ACTIVE SUBJECTS =====
 for (let subject of ACTIVE_EXAM_SUBJECTS) {
-    // Convert subject to match marks keys
-    const subjectKey = subject.toUpperCase().replace(/[-\s]/g, '_');
-    const markValue = marks[subjectKey]?.toFixed(2) || "0.00";
-    
-    // Dynamically find which field to use
     switch(subject) {
         case "PHYSICS":
-            formData.append(FORM_FIELDS.PHYSICS, markValue);
+            formData.append(FORM_FIELDS.PHYSICS, marks.physics?.toFixed(2) || "0.00");
             break;
         case "CHEMISTRY":
-            formData.append(FORM_FIELDS.CHEMISTRY, markValue);
+            formData.append(FORM_FIELDS.CHEMISTRY, marks.chemistry?.toFixed(2) || "0.00");
             break;
         case "MATHS":
-            formData.append(FORM_FIELDS.MATHS, markValue);
-            break;
-        case "MATHS_A":
-            formData.append(FORM_FIELDS.MATHS_A, markValue);
-            break;
-        case "MATHS_B":
-            formData.append(FORM_FIELDS.MATHS_B, markValue);
+            formData.append(FORM_FIELDS.MATHS, marks.maths?.toFixed(2) || "0.00");
             break;
         case "BOTANY":
-            formData.append(FORM_FIELDS.BOTANY, markValue);
+            formData.append(FORM_FIELDS.BOTANY, "0.00");
             break;
         case "ZOOLOGY":
-            formData.append(FORM_FIELDS.ZOOLOGY, markValue);
+            formData.append(FORM_FIELDS.ZOOLOGY, "0.00");
             break;
         case "BZ":
-            formData.append(FORM_FIELDS.BZ, markValue);
+            formData.append(FORM_FIELDS.BZ, "0.00");
             break;
-        default:
-            console.log(`No field mapping for subject: ${subject}`);
+        case "MATHS_A":
+            formData.append(FORM_FIELDS.MATHS_A, "0.00");
+            break;
+        case "MATHS_B":
+            formData.append(FORM_FIELDS.MATHS_B, "0.00");
+            break;
     }
 }
         // ALWAYS send these
@@ -4521,7 +4508,10 @@ function submitExam() {
 }
 
 function identifySubject(subjectName) {
-    return subjectName; // Return as-is, no conversion
+  if (subjectName.includes('Math')) return 'Mathematics';
+  if (subjectName.includes('Phy')) return 'Physics';
+  if (subjectName.includes('Chem')) return 'Chemistry';
+  return subjectName;
 }
 
 // ===== SUMMARY INTERFACE =====
@@ -4858,5 +4848,4 @@ console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "
 </script> 
 </body>
 </html>
-
 
