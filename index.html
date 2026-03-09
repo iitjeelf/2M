@@ -4288,12 +4288,14 @@ async function submitToGoogleForms(answersData) {
         const marks = calculateSubjectMarks(answersData.summary);
         const formData = new URLSearchParams();
         
-        // Student information (ALWAYS sent)
-        formData.append(FORM_FIELDS.STUDENT_NAME, answersData.student.name);
-        formData.append(FORM_FIELDS.SECTION, answersData.student.sec);
-        formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
-        formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
-        
+     // Student information (ALWAYS sent)
+formData.append(FORM_FIELDS.STUDENT_NAME, answersData.student.name);
+formData.append(FORM_FIELDS.SECTION, answersData.student.sec);
+formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
+formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
+
+// TEMPORARY DEBUG ALERT - ADD THIS LINE
+alert("Section value: " + answersData.student.sec + " sent to field: " + FORM_FIELDS.SECTION);
         // ===== SEND ONLY ACTIVE SUBJECTS =====
         for (let subject of ACTIVE_EXAM_SUBJECTS) {
             switch(subject) {
