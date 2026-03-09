@@ -4253,6 +4253,17 @@ function calculateSubjectMarks(summary) {
     const marks = {};
     let total = 0;
     
+    // For each subject in the summary, use its EXACT name as the key
+    for (let subject in summary) {
+        // Create a safe key name (replace spaces/hyphens with underscores, uppercase)
+        const subjectKey = subject.toUpperCase().replace(/[-\s]/g, '_');
+        marks[subjectKey] = summary[subject].marks;
+        total += summary[subject].marks;
+    }
+    
+    marks.TOTAL = total;
+    return marks;
+}
     // Initialize all subjects from setup
     EXAM_SETUP.subjects.forEach(subject => {
         marks[subject.name.toLowerCase()] = 0;
@@ -4288,7 +4299,7 @@ async function submitToGoogleForms(answersData) {
         const marks = calculateSubjectMarks(answersData.summary);
         const formData = new URLSearchParams();
         
-  // Format subject codes as requested
+ // Format subject codes as requested
 const subjectCodes = ACTIVE_EXAM_SUBJECTS.map(s => {
     if (s === "MATHS_A") return "MA";
     if (s === "MATHS_B") return "MB";
@@ -4298,7 +4309,7 @@ const subjectCodes = ACTIVE_EXAM_SUBJECTS.map(s => {
     if (s === "BOTANY") return "B";
     if (s === "ZOOLOGY") return "Z";
     if (s === "BZ") return "BZ";
-    return s.substring(0,1); // fallback
+    return s.substring(0,1);
 }).join(', ');
 
 const today = new Date();
@@ -4310,32 +4321,36 @@ formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
 
 // TEMPORARY DEBUG ALERT - ADD THIS LINE
 alert("Section value: " + answersData.student.sec + " sent to field: " + FORM_FIELDS.SECTION);
-      // ===== SEND ONLY ACTIVE SUBJECTS =====
+  // ===== SEND ONLY ACTIVE SUBJECTS =====
 for (let subject of ACTIVE_EXAM_SUBJECTS) {
+    // Create the same key format as in calculateSubjectMarks
+    const subjectKey = subject.toUpperCase().replace(/[-\s]/g, '_');
+    
+    // Check which field to use
     switch(subject) {
         case "PHYSICS":
-            formData.append(FORM_FIELDS.PHYSICS, marks.physics?.toFixed(2) || "0.00");
+            formData.append(FORM_FIELDS.PHYSICS, marks[subjectKey]?.toFixed(2) || "0.00");
             break;
         case "CHEMISTRY":
-            formData.append(FORM_FIELDS.CHEMISTRY, marks.chemistry?.toFixed(2) || "0.00");
+            formData.append(FORM_FIELDS.CHEMISTRY, marks[subjectKey]?.toFixed(2) || "0.00");
             break;
         case "MATHS":
-            formData.append(FORM_FIELDS.MATHS, marks.maths?.toFixed(2) || "0.00");
-            break;
-        case "BOTANY":
-            formData.append(FORM_FIELDS.BOTANY, "0.00");
-            break;
-        case "ZOOLOGY":
-            formData.append(FORM_FIELDS.ZOOLOGY, "0.00");
-            break;
-        case "BZ":
-            formData.append(FORM_FIELDS.BZ, "0.00");
+            formData.append(FORM_FIELDS.MATHS, marks[subjectKey]?.toFixed(2) || "0.00");
             break;
         case "MATHS_A":
-            formData.append(FORM_FIELDS.MATHS_A, "0.00");
+            formData.append(FORM_FIELDS.MATHS_A, marks[subjectKey]?.toFixed(2) || "0.00");
             break;
         case "MATHS_B":
-            formData.append(FORM_FIELDS.MATHS_B, "0.00");
+            formData.append(FORM_FIELDS.MATHS_B, marks[subjectKey]?.toFixed(2) || "0.00");
+            break;
+        case "BOTANY":
+            formData.append(FORM_FIELDS.BOTANY, marks[subjectKey]?.toFixed(2) || "0.00");
+            break;
+        case "ZOOLOGY":
+            formData.append(FORM_FIELDS.ZOOLOGY, marks[subjectKey]?.toFixed(2) || "0.00");
+            break;
+        case "BZ":
+            formData.append(FORM_FIELDS.BZ, marks[subjectKey]?.toFixed(2) || "0.00");
             break;
     }
 }
@@ -4522,10 +4537,8 @@ function submitExam() {
 }
 
 function identifySubject(subjectName) {
-  if (subjectName.includes('Math')) return 'Mathematics';
-  if (subjectName.includes('Phy')) return 'Physics';
-  if (subjectName.includes('Chem')) return 'Chemistry';
-  return subjectName;
+    // Simply return the subject name as-is, no conversion
+    return subjectName;
 }
 
 // ===== SUMMARY INTERFACE =====
