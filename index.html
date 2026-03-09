@@ -4290,7 +4290,12 @@ async function submitToGoogleForms(answersData) {
         
      // Student information (ALWAYS sent)
 formData.append(FORM_FIELDS.STUDENT_NAME, answersData.student.name);
-formData.append(FORM_FIELDS.SECTION, answersData.student.sec);
+// Get subjects from your exam setup
+const subjectList = EXAM_SETUP.subjects.map(s => s.name.substring(0,1)).join('');
+const today = new Date();
+const dateStr = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear().toString().slice(-2)}`;
+
+formData.append(FORM_FIELDS.SECTION, answersData.student.sec + " " + dateStr + " " + subjectList);
 formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
 formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
 
