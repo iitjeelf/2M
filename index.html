@@ -4249,24 +4249,13 @@ function formatAllAnswersString(answers) {
     return result;
 }
 
-function calculateSubjectMarks(summary) {
+fufunction calculateSubjectMarks(summary) {
     const marks = {};
     let total = 0;
     
-    // Initialize all subjects from setup
-    EXAM_SETUP.subjects.forEach(subject => {
-        marks[subject.name.toLowerCase()] = 0;
-    });
-    
-    // Calculate marks for each subject
+    // Simply use the EXACT subject names from the summary
     for (let subject in summary) {
-        const subjectLower = subject.toLowerCase();
-        for (let setupSubject of EXAM_SETUP.subjects) {
-            if (subjectLower.includes(setupSubject.name.toLowerCase())) {
-                marks[setupSubject.name.toLowerCase()] = summary[subject].marks;
-                break;
-            }
-        }
+        marks[subject] = summary[subject].marks;
         total += summary[subject].marks;
     }
     
@@ -4297,32 +4286,39 @@ formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
 // TEMPORARY DEBUG ALERT - ADD THIS LINE
 alert("Section value: " + answersData.student.sec + " sent to field: " + FORM_FIELDS.SECTION);
       // ===== SEND ONLY ACTIVE SUBJECTS =====
+// ===== SEND ONLY ACTIVE SUBJECTS =====
 for (let subject of ACTIVE_EXAM_SUBJECTS) {
+    // Get the mark directly from marks object using the subject name
+    const markValue = marks[subject]?.toFixed(2) || "0.00";
+    
+    // Map to the correct form field
     switch(subject) {
         case "PHYSICS":
-            formData.append(FORM_FIELDS.PHYSICS, marks.physics?.toFixed(2) || "0.00");
+            formData.append(FORM_FIELDS.PHYSICS, markValue);
             break;
         case "CHEMISTRY":
-            formData.append(FORM_FIELDS.CHEMISTRY, marks.chemistry?.toFixed(2) || "0.00");
+            formData.append(FORM_FIELDS.CHEMISTRY, markValue);
             break;
         case "MATHS":
-            formData.append(FORM_FIELDS.MATHS, marks.maths?.toFixed(2) || "0.00");
-            break;
-        case "BOTANY":
-            formData.append(FORM_FIELDS.BOTANY, "0.00");
-            break;
-        case "ZOOLOGY":
-            formData.append(FORM_FIELDS.ZOOLOGY, "0.00");
-            break;
-        case "BZ":
-            formData.append(FORM_FIELDS.BZ, "0.00");
+            formData.append(FORM_FIELDS.MATHS, markValue);
             break;
         case "MATHS_A":
-            formData.append(FORM_FIELDS.MATHS_A, "0.00");
+            formData.append(FORM_FIELDS.MATHS_A, markValue);
             break;
         case "MATHS_B":
-            formData.append(FORM_FIELDS.MATHS_B, "0.00");
+            formData.append(FORM_FIELDS.MATHS_B, markValue);
             break;
+        case "BOTANY":
+            formData.append(FORM_FIELDS.BOTANY, markValue);
+            break;
+        case "ZOOLOGY":
+            formData.append(FORM_FIELDS.ZOOLOGY, markValue);
+            break;
+        case "BZ":
+            formData.append(FORM_FIELDS.BZ, markValue);
+            break;
+        default:
+            console.log(`No field mapping for subject: ${subject}`);
     }
 }
         // ALWAYS send these
@@ -4508,12 +4504,8 @@ function submitExam() {
 }
 
 function identifySubject(subjectName) {
-  if (subjectName.includes('Math')) return 'Mathematics';
-  if (subjectName.includes('Phy')) return 'Physics';
-  if (subjectName.includes('Chem')) return 'Chemistry';
-  return subjectName;
+    return subjectName; // Return exactly as received, no conversion
 }
-
 // ===== SUMMARY INTERFACE =====
 function showSummaryInterface(subjData) {
   document.getElementById('examArea').style.display = 'none';
