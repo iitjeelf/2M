@@ -93,7 +93,7 @@ export async function onRequest(context) {
         </head>
         <body>
           <div class="lock-box">
-            <h1>🔒 EXAM LOCKED </h1>
+            <h1> EXAM LOCKED </h1>
             <p><strong>This EXAM is locked by the teacher.</strong></p>
                      </div>
         </body>
