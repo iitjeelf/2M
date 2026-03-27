@@ -2571,43 +2571,11 @@ function parseAnswerKeyFile(text) {
 
 // ===== IMAGE HANDLING FUNCTIONS =====
 async function preloadAllImages() {
-    console.log("🖼️ Preloading all question images...");
-    
-    const imagePromises = [];
-    
-    for (let i = 1; i <= TOTAL_QUESTIONS; i++) {
-        const possiblePaths = [
-            `questions/${i}.png`,
-            `questions/Q${i}.png`,
-            `questions/${i}.jpg`,
-            `questions/Q${i}.jpg`,
-            `questions/${i}.jpeg`,
-            `questions/Q${i}.jpeg`,
-            `images/${i}.png`,
-            `images/Q${i}.png`
-        ];
-        
-        for (const path of possiblePaths) {
-            const promise = new Promise((resolve) => {
-                const img = new Image();
-                img.onload = () => {
-                    console.log(`✅ Preloaded: ${path}`);
-                    preloadedImages[path] = img;
-                    resolve(path);
-                };
-                img.onerror = () => {
-                    console.log(`❌ Failed to preload: ${path}`);
-                    resolve(null);
-                };
-                img.src = path;
-            });
-            imagePromises.push(promise);
-        }
-    }
-    
-    await Promise.all(imagePromises);
-    console.log("✅ Image preloading complete");
+    // NO PRELOADING - Images load on demand only
+    console.log("🖼️ On-demand image loading enabled");
+    return;
 }
+
 
 function getBestImagePath(questionNumber) {
     const possiblePaths = [
