@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+2M<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>LFJC Online Exam</title>
 <style>
 /* ALL YOUR EXISTING CSS STAYS EXACTLY THE SAME */
-/* ===== BASE STYLES ===== */
+/* ===== BASE STYLES ===== */ 
 :root {
   --primary-color: #4B0082;
   --secondary-color: #af82ba;
@@ -1463,9 +1463,9 @@ body.anti-sleep-active {
 <!-- Access Denied Screen - ALWAYS SHOWS FIRST -->
 <div id="accessDenied" class="access-denied">
     <h1>LFJC ONLINE EXAMINATION</h1>
-   <p style="font-size: 1.2em; margin: 10px 0; font-weight: bold;" id="totalQuestionsDisplay">TOTAL QUESTIONS</p>
+    <p style="font-size: 1.2em; margin: 10px 0;" id="totalQuestionsDisplay">TOTAL QUESTIONS</p>
     <div id="subjectBreakdownDisplay"></div>
-    <p style="margin: 10px 0; font-weight: bold;">CORRECT ANSWER + 1 MARKS</p>
+   <p style="margin: 10px 0; font-weight: bold;">CORRECT ANSWER + 1 MARKS</p>
     <p style="margin: 5px 0; font-weight: bold;">WRONG ANSWER 0 MARK</p>
     <input type="password" id="accessCode" class="access-code-input" placeholder="Enter Access Code">
     <button id="verifyAccess" class="verify-btn">VERIFY ACCESS</button>
@@ -1484,7 +1484,7 @@ body.anti-sleep-active {
   <div class="form-group"><label>ROLL NUMBER</label><input type="text" id="stuRoll" placeholder="Digits only" autocomplete="off"></div>
   <div class="form-group"><label>ADMISSION NUMBER</label><input type="text" id="stuAdm" placeholder="Digits only" autocomplete="off"></div>
 
-
+  <!-- REMOVED: Form Assignment Display -->
   
   <!-- RESUME EXAM SECTION -->
   <div id="resumeExamSection">
@@ -1605,7 +1605,7 @@ body.anti-sleep-active {
   </div>
 </div>
 
-<footer>© LFJC 2026 | All Rights Reserved</footer>
+<footer>© LFJC 2026 All Rights Reserved</footer>
 
 <!-- Security Overlays -->
 <div id="fullRedOverlay"></div>
@@ -1643,29 +1643,27 @@ body.anti-sleep-active {
 const EXAM_SETUP = {
     // List your subjects: name, total questions, how many are numerical
     subjects: [
-        
-         { name: "MATHS", questions: 80, numerical: 0 }   // 5 MCQ, 0 Numerical
-          // 5 MCQ, 5 Numerical     
+      { name: "MATHS_A", questions: 5, numerical: 0 },    // 5 MCQ, 0 Numerical
+      { name: "MATHS_B", questions: 10, numerical: 5 }   //5 MCQ, 5 Numerical
     ],
     
     // Total time in minutes
-    duration: 120,
+    duration: 15,
     
     // Which subjects to send to Google Forms (use exact names from above)
-    activeForForms: ["MATHS"]
+    activeForForms: ["MATHS_A", "MATHS_B"]
+  // MATHS_A	
+ // MATHS_B	
+ // MATHS	
+ // BOTANY	
+ // ZOOLOGY	
+ // BZ	
+ // PHYSICS	
+ // CHEMISTRY
 };
-//Maths-A 
-// Maths-B
-// Maths  
-// Botany
-// zoology
-// BZ
-// Physics
-// Chemistry
-// A Marks
-// B Marks
-// C Marks  
-
+  
+    
+    
 // ===== AUTO-CALCULATE EVERYTHING FROM YOUR CONFIG =====
 let currentStart = 1;
 EXAM_SETUP.subjects.forEach(subject => {
@@ -1704,6 +1702,7 @@ EXAM_SETUP.subjects.forEach(s => {
                 s.numerical > 0 ? `, Q${s.numericalStart}-${s.end} Numerical)` : "All MCQ)");
 });
 
+// Update the access denied screen
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('totalQuestionsDisplay').innerHTML = `<strong>TOTAL ${TOTAL_QUESTIONS} QUESTIONS</strong>`;
     
@@ -1770,19 +1769,19 @@ const FORM_FIELDS = {
     ADMISSION_NUMBER: "entry.1234063852",
     
     // Subject Fields (as they appear in your form)
-    MATHS_A: "entry.1989859216",      // Maths-A
-    MATHS_B: "entry.751186481",       // Maths-B
-    MATHS: "entry.1773709116",         // Maths (main)
-    BOTANY: "entry.1228811999",        // Botany
-    ZOOLOGY: "entry.361390291",        // zoology
-    BZ: "entry.1382726950",            // BZ
-    PHYSICS: "entry.1953974928",       // Physics
-    CHEMISTRY: "entry.296331194",      // Chemistry
+    MATHS_A: "entry.1989859216",      // MATHS_A
+    MATHS_B: "entry.751186481",       // MATHS_B
+    MATHS: "entry.1773709116",        // MATHS
+    BOTANY: "entry.1228811999",       // BOTANY
+    ZOOLOGY: "entry.361390291",       // ZOOLOGY
+    BZ: "entry.1382726950",           // BZ
+    PHYSICS: "entry.1953974928",      // PHYSICS
+    CHEMISTRY: "entry.296331194",     // CHEMISTRY
     
     // Marks Fields
-    A_MARKS: "entry.1390068574",       // A Marks
-    B_MARKS: "entry.1587280094",       // B Marks
-    C_MARKS: "entry.1032663012",       // C Marks
+    A_MARKS: "entry.1390068574",       // A_MARKS
+    B_MARKS: "entry.1587280094",       // B_MARKS
+    C_MARKS: "entry.1032663012",       // C_MARKS
     
     // Total & Answers
     TOTAL_MARKS: "entry.1289040887",   // Total marks
@@ -1792,7 +1791,7 @@ const FORM_FIELDS = {
 // ===== MULTI-FORM GOOGLE FORMS INTEGRATION =====
 const GOOGLE_FORMS = {
     '1': "https://docs.google.com/forms/d/e/1FAIpQLSfDqJ96BQj-kHj6RwHW1Vb1jSUQ7x-2lxMbSEAtb1GNVGB6xA/formResponse",
-    '2': " https://docs.google.com/forms/d/e/1FAIpQLSfgUmoGNzqlP4shcdEIGmK6ftCxl-z-7NTQX0t1dJS6HBYnNw/formResponse",
+    '2': "https://docs.google.com/forms/d/e/1FAIpQLSdnZdv40aL5Ru4r-R0k6VJdpU-1V1BfgOBl9s_PHwBjkgToYg/formResponse",
     '3': "https://docs.google.com/forms/d/e/1FAIpQLSeFGU6ngws5V1Un--VElcO7ivRtXUcOLzdIvEUQNu7RrZvpLw/formResponse",
     '4': "https://docs.google.com/forms/d/e/1FAIpQLSdwMn5az6oBg6GZknUib_G-qHECxPb7bXg2yoqK_vjxGU4JQg/formResponse",
     '5': "https://docs.google.com/forms/d/e/1FAIpQLSeuej9VVaxkv5Ail7Pbk5yzS5HuOlen2bVz4L2rsdywWBIvmQ/formResponse",
@@ -1801,7 +1800,8 @@ const GOOGLE_FORMS = {
     '8': "https://docs.google.com/forms/d/e/1FAIpQLSd9Oj2FaCzpmqQesWmQL-5t1FKfUfzz5AaVTc-Dq-eDujUr3g/formResponse",
     '9': "https://docs.google.com/forms/d/e/1FAIpQLSdeUH8oatXXsB9NuQpsbRWfnGj0N5Cbh7SVe07tmcUW9WJj8A/formResponse",
     '10': "https://docs.google.com/forms/d/e/1FAIpQLSf3n6fMXa3mP_ij279XKLELfohGwuMfmWWc9fTfM3VgY2oWLg/formResponse"
-}; 
+};
+
 // ===== GLOBAL VARIABLES =====
 let images = [];
 let hasSubmitted = false;
@@ -2571,11 +2571,43 @@ function parseAnswerKeyFile(text) {
 
 // ===== IMAGE HANDLING FUNCTIONS =====
 async function preloadAllImages() {
-    // NO PRELOADING - Images load on demand only
-    console.log("🖼️ On-demand image loading enabled");
-    return;
+    console.log("🖼️ Preloading all question images...");
+    
+    const imagePromises = [];
+    
+    for (let i = 1; i <= TOTAL_QUESTIONS; i++) {
+        const possiblePaths = [
+            `questions/${i}.png`,
+            `questions/Q${i}.png`,
+            `questions/${i}.jpg`,
+            `questions/Q${i}.jpg`,
+            `questions/${i}.jpeg`,
+            `questions/Q${i}.jpeg`,
+            `images/${i}.png`,
+            `images/Q${i}.png`
+        ];
+        
+        for (const path of possiblePaths) {
+            const promise = new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    console.log(`✅ Preloaded: ${path}`);
+                    preloadedImages[path] = img;
+                    resolve(path);
+                };
+                img.onerror = () => {
+                    console.log(`❌ Failed to preload: ${path}`);
+                    resolve(null);
+                };
+                img.src = path;
+            });
+            imagePromises.push(promise);
+        }
+    }
+    
+    await Promise.all(imagePromises);
+    console.log("✅ Image preloading complete");
 }
-
 
 function getBestImagePath(questionNumber) {
     const possiblePaths = [
@@ -2697,6 +2729,7 @@ function retryImageLoad(questionNumber) {
     
     tryNextPath();
 }
+
 
 // ===== POWER LOSS PROTECTION SYSTEM =====
 function initPowerLossProtection() {
@@ -4230,20 +4263,9 @@ function calculateSubjectMarks(summary) {
     const marks = {};
     let total = 0;
     
-    // Initialize all subjects from setup
-    EXAM_SETUP.subjects.forEach(subject => {
-        marks[subject.name.toLowerCase()] = 0;
-    });
-    
-    // Calculate marks for each subject
+    // Simply use the EXACT subject names from the summary
     for (let subject in summary) {
-        const subjectLower = subject.toLowerCase();
-        for (let setupSubject of EXAM_SETUP.subjects) {
-            if (subjectLower.includes(setupSubject.name.toLowerCase())) {
-                marks[setupSubject.name.toLowerCase()] = summary[subject].marks;
-                break;
-            }
-        }
+        marks[subject] = summary[subject].marks;
         total += summary[subject].marks;
     }
     
@@ -4265,80 +4287,67 @@ async function submitToGoogleForms(answersData) {
         const marks = calculateSubjectMarks(answersData.summary);
         const formData = new URLSearchParams();
         
-        // Student information (ALWAYS sent)
-        formData.append(FORM_FIELDS.STUDENT_NAME, answersData.student.name);
-        formData.append(FORM_FIELDS.SECTION, answersData.student.sec);
-        formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
-        formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
-        
-       // ===== SEND ONLY ACTIVE SUBJECTS =====
-// ===== SEND ONLY ACTIVE SUBJECTS (AUTOMATED) =====
+ // Student information (ALWAYS sent)
+formData.append(FORM_FIELDS.STUDENT_NAME, answersData.student.name);
+formData.append(FORM_FIELDS.SECTION, answersData.student.sec);
+formData.append(FORM_FIELDS.ROLL_NUMBER, answersData.student.roll);
+formData.append(FORM_FIELDS.ADMISSION_NUMBER, answersData.student.adm);
+
+// ===== FORMAT SECTION WITH DATE AND SUBJECT CODES =====
+const subjectCodes = ACTIVE_EXAM_SUBJECTS.map(s => {
+    if (s === "MATHS_A") return "MA";
+    if (s === "MATHS_B") return "MB";
+    if (s === "MATHS") return "M";
+    if (s === "PHYSICS") return "P";
+    if (s === "CHEMISTRY") return "C";
+    if (s === "BOTANY") return "B";
+    if (s === "ZOOLOGY") return "Z";
+    if (s === "BZ") return "BZ";
+    return s.substring(0,1);
+}).join(', ');
+
+const today = new Date();
+const dateStr = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear().toString().slice(-2)}`;
+
+// Replace section with formatted value
+formData.set(FORM_FIELDS.SECTION, answersData.student.sec + " " + dateStr + " " + subjectCodes);
+
+// ===== SEND ONLY ACTIVE SUBJECTS =====
 for (let subject of ACTIVE_EXAM_SUBJECTS) {
-    // Clean the subject name to match FORM_FIELDS format
-    const cleanSubject = subject
-        .trim()                    // Remove spaces
-        .toUpperCase()              // Convert to uppercase
-        .replace(/\s+/g, '_')       // Replace spaces with underscores
-        .replace(/-/g, '_');        // Replace hyphens with underscores
+    // Get the mark directly from marks object using the subject name
+    const markValue = marks[subject]?.toFixed(2) || "0.00";
     
-    // Try multiple possible formats
-    let marksValue = "0.00";
-    
-    // Try 1: Direct match with cleaned subject
-    if (marks[cleanSubject]) {
-        marksValue = marks[cleanSubject].toFixed(2);
-    }
-    // Try 2: Try original subject
-    else if (marks[subject]) {
-        marksValue = marks[subject].toFixed(2);
-    }
-    // Try 3: Try uppercase
-    else if (marks[subject.toUpperCase()]) {
-        marksValue = marks[subject.toUpperCase()].toFixed(2);
-    }
-    // Try 4: Look in currentSubjData
-    else if (currentSubjData) {
-        for (let key in currentSubjData) {
-            if (key.toUpperCase().replace(/[-\s]/g, '_') === cleanSubject) {
-                marksValue = currentSubjData[key].marks.toFixed(2);
-                break;
-            }
-        }
-    }
-    
-    // Find matching FORM_FIELD
-    let fieldKey = null;
-    
-    // Try exact match
-    if (FORM_FIELDS[cleanSubject]) {
-        fieldKey = cleanSubject;
-    }
-    // Try with original
-    else if (FORM_FIELDS[subject]) {
-        fieldKey = subject;
-    }
-    // Try uppercase
-    else if (FORM_FIELDS[subject.toUpperCase()]) {
-        fieldKey = subject.toUpperCase();
-    }
-    // Search through all FORM_FIELDS keys
-    else {
-        for (let key in FORM_FIELDS) {
-            if (key.replace(/_/g, '').toUpperCase() === cleanSubject.replace(/_/g, '')) {
-                fieldKey = key;
-                break;
-            }
-        }
-    }
-    
-    // Send if field found
-    if (fieldKey && FORM_FIELDS[fieldKey]) {
-        formData.append(FORM_FIELDS[fieldKey], marksValue);
-        console.log(`✓ ${subject} → ${fieldKey} sent:`, marksValue);
-    } else {
-        console.log(`⚠️ No form field found for: ${subject}`);
+    // Map to the correct form field
+    switch(subject) {
+        case "PHYSICS":
+            formData.append(FORM_FIELDS.PHYSICS, markValue);
+            break;
+        case "CHEMISTRY":
+            formData.append(FORM_FIELDS.CHEMISTRY, markValue);
+            break;
+        case "MATHS":
+            formData.append(FORM_FIELDS.MATHS, markValue);
+            break;
+        case "MATHS_A":
+            formData.append(FORM_FIELDS.MATHS_A, markValue);
+            break;
+        case "MATHS_B":
+            formData.append(FORM_FIELDS.MATHS_B, markValue);
+            break;
+        case "BOTANY":
+            formData.append(FORM_FIELDS.BOTANY, markValue);
+            break;
+        case "ZOOLOGY":
+            formData.append(FORM_FIELDS.ZOOLOGY, markValue);
+            break;
+        case "BZ":
+            formData.append(FORM_FIELDS.BZ, markValue);
+            break;
+        default:
+            console.log(`No field mapping for subject: ${subject}`);
     }
 }
+
         // ALWAYS send these
         formData.append(FORM_FIELDS.TOTAL_MARKS, marks.total.toFixed(2));
         
@@ -4460,15 +4469,12 @@ function submitExam() {
   
   const subjData = {};
   examData.subjectNames.forEach((s, i) => {
-    const subjectName = s;  // Use exact name, don't modify
-    
-    if (!subjData[subjectName]) {
-      subjData[subjectName] = {
-        correct: 0, wrong: 0, blank: 0, total: 0, marks: 0,
-        mcq: { total: 0, correct: 0 },
-        fillBlank: { total: 0, correct: 0 }
-      };
-    }
+    const subjectName = identifySubject(s);
+    if (!subjData[subjectName]) subjData[subjectName] = {
+      correct: 0, wrong: 0, blank: 0, total: 0, marks: 0,
+      mcq: { total: 0, correct: 0 },
+      fillBlank: { total: 0, correct: 0 }
+    };
     
     const ans = progress.answers[i];
     const questionType = examData.questionTypes[i];
@@ -4524,6 +4530,9 @@ function submitExam() {
   showSummaryInterface(subjData);
 }
 
+function identifySubject(subjectName) {
+    return subjectName; // Return exactly as received, no conversion
+}
 // ===== SUMMARY INTERFACE =====
 function showSummaryInterface(subjData) {
   document.getElementById('examArea').style.display = 'none';
@@ -4858,4 +4867,5 @@ console.log("✅ Active subjects for this exam:", ACTIVE_EXAM_SUBJECTS.join(", "
 </script> 
 </body>
 </html>
+
 
